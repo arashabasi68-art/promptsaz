@@ -286,6 +286,27 @@ textarea.inp{min-height:132px;resize:vertical;line-height:1.9}
 .botin .inp{min-height:42px;flex:1;min-width:0}
 .tk{border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:8px;background:var(--surface);font-size:13.5px}
 .tkr{background:color-mix(in srgb,var(--teal) 12%,transparent);border-radius:10px;padding:6px 10px;font-size:13px}
+/* pages + guided flow */
+[hidden]{display:none!important}
+section.sec{border-top:0;padding-block:clamp(22px,5vw,44px)}
+.nextbar{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:10px;box-shadow:var(--shadow)}
+.steps3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.steps3 span{padding:4px 6px;text-align:center;font-size:12.5px;border-radius:10px;background:var(--bg2);color:var(--muted);border:1px solid var(--line)}
+.steps3 span.on{background:color-mix(in srgb,var(--teal) 16%,transparent);color:var(--teal);border-color:var(--teal);font-weight:800}
+.steps3 span.done{color:var(--good);border-color:color-mix(in srgb,var(--good) 45%,transparent)}
+.nbrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;font-size:14px}
+details.more>summary{cursor:pointer;color:var(--indigo);font-weight:700;font-size:13.5px;list-style:none;padding-block:4px}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::before{content:"＋ ";color:var(--teal)}
+details.more[open]>summary::before{content:"− "}
+details.adv{grid-column:1/-1}
+details.adv>summary{cursor:pointer;list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 18px;font-weight:800}
+details.adv>summary::-webkit-details-marker{display:none}
+details.adv>summary::before{content:"＋ ";color:var(--teal)}
+details.adv[open]>summary::before{content:"− "}
+.advgrid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));margin-top:14px}
+.okbox{display:grid;gap:2px;padding:12px 14px;border-radius:var(--r-sm);background:color-mix(in srgb,var(--good) 12%,transparent);border:1px solid color-mix(in srgb,var(--good) 45%,transparent);font-size:14px}
+.q-hint{font-size:13.5px;color:var(--muted)}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
 <div id="app" dir="rtl" lang="fa">
@@ -328,6 +349,7 @@ textarea.inp{min-height:132px;resize:vertical;line-height:1.9}
 </header>
 
 <main class="wrap">
+<div id="nextBar" class="nextbar" hidden></div>
 <section class="sec hero-sec" id="home">
   <div class="hero">
     <div>
@@ -352,25 +374,26 @@ textarea.inp{min-height:132px;resize:vertical;line-height:1.9}
 <section class="sec" id="tool">
   <div class="eyebrow">ساخت پرامپت</div>
   <h2 class="sec-h">ایده را بنویسید، پرامپت را تحویل بگیرید</h2>
-  <p class="sec-p">کلمات کلیدی ایده هم‌زمان با نوشتن استخراج می‌شوند و صفحات و قابلیت‌های پیشنهادی بر اساس آن‌ها ساخته می‌شود.</p>
+  <p class="sec-p">سه قدم ساده: ایده را بنویسید، نوع خروجی را انتخاب کنید و پرامپت را بسازید.</p>
   <div class="tool-grid">
     <form class="card raised" id="genForm" autocomplete="off" novalidate>
-      <div class="field"><label for="fTitle">عنوان پروژه (اختیاری)</label><input class="inp" id="fTitle" maxlength="60" placeholder="مثلاً: اپ رزرو نوبت آرایشگاه"></div>
-      <div class="field"><label for="fIdea">ایده‌ی شما</label>
+      
+      <div class="field"><label for="fIdea">۱. ایده‌ی شما را بنویسید</label>
         <textarea class="inp" id="fIdea" maxlength="800" placeholder="ایده را با جمله‌های ساده بنویسید..."></textarea>
         <div class="row" style="justify-content:space-between"><span class="hint">نمونه‌ی بالا فقط برای شروع است؛ آن را عوض کنید.</span><span class="hint mono" id="cnt">0/800</span></div>
       </div>
-      <div class="field"><span class="lbl" id="typeLbl">نوع خروجی</span>
+      <div class="field"><span class="lbl" id="typeLbl">۲. چه چیزی می‌خواهید؟</span>
         <div class="types" role="radiogroup" aria-labelledby="typeLbl">
-          <label><input type="radio" name="otype" value="android" checked><span class="t"><svg><use href="#i-android"/></svg>اندروید<small>پروژه آماده و PWA</small></span></label>
-          <label><input type="radio" name="otype" value="windows"><span class="t"><svg><use href="#i-windows"/></svg>ویندوز<small>برنامه دسکتاپ</small></span></label>
-          <label><input type="radio" name="otype" value="site"><span class="t"><svg><use href="#i-site"/></svg>سایت<small>چندبخشی و واکنش‌گرا</small></span></label>
-          <label><input type="radio" name="otype" value="html"><span class="t"><svg><use href="#i-html"/></svg>HTML<small>یک فایل مستقل</small></span></label>
+          <label><input type="radio" name="otype" value="android" checked><span class="t"><svg><use href="#i-android"/></svg>اندروید<small>اپ برای گوشی</small></span></label>
+          <label><input type="radio" name="otype" value="windows"><span class="t"><svg><use href="#i-windows"/></svg>ویندوز<small>برنامه برای کامپیوتر</small></span></label>
+          <label><input type="radio" name="otype" value="site"><span class="t"><svg><use href="#i-site"/></svg>سایت<small>سایت چندصفحه‌ای</small></span></label>
+          <label><input type="radio" name="otype" value="html"><span class="t"><svg><use href="#i-html"/></svg>HTML<small>یک صفحه‌ی ساده</small></span></label>
         </div>
       </div>
-      <div class="field"><span class="lbl">کلمات کلیدی استخراج‌شده</span><div class="chips" id="kwBox" aria-live="polite"></div></div>
+      <details class="more" style="margin-bottom:14px"><summary>عنوان دلخواه (اختیاری)</summary><div class="field" style="margin-top:10px"><label for="fTitle">عنوان پروژه</label><input class="inp" id="fTitle" maxlength="60" placeholder="مثلاً: اپ رزرو نوبت آرایشگاه"></div></details>
+      <div class="field"><span class="lbl">کلمات کلیدی که از ایده فهمیدم</span><div class="chips" id="kwBox" aria-live="polite"></div></div>
       <div class="err" id="genErr" role="alert"></div>
-      <button class="btn primary" type="submit" style="width:100%"><svg><use href="#i-spark"/></svg>تولید پرامپت</button>
+      <button class="btn primary" type="submit" style="width:100%"><svg><use href="#i-spark"/></svg>۳. ساخت پرامپت</button>
     </form>
     <div id="resultBox" class="result" aria-live="polite"></div>
   </div>
@@ -690,7 +713,7 @@ function reauth(reason){
 
 const PS=window.PS={$,$$,store,clean,esc,fa,money,norm,uid,rand,b64,unb64,hex,sha256,pbkdf2,safeEq,legacyHash,hashPw,verifyPw,dummyVerify,cryptoOK,ITER,
   toast,copyText,saveFile,openSheet,closeSheet,S,saveUsers,savePrompts,me,isAdmin,userById,fmtDate,fmtDT,NOW,DAY,seedUsers,normalizeUser,newTrial,PLANS,SEED_PASS,
-  subState,att,lockLeft,failAttempt,clearAttempt,audit,verifyAudit,reauth};
+  subState,att,lockLeft,failAttempt,clearAttempt,audit,verifyAudit,reauth,go:id=>{location.hash=id}};
 })();
 /* ===== موتور پرامپت + ابزار ساخت ===== */
 (function(){
@@ -821,25 +844,26 @@ window.PS.offerFile=offerFile;window.PS.slug=slug;
 
 function drawResult(){
   const d=S.draft;
-  if(!d){resultBox.innerHTML='<div class="empty"><b>هنوز پرامپتی ساخته نشده</b>ایده را بنویسید و «تولید پرامپت» را بزنید.</div>';return}
+  if(!d){resultBox.innerHTML='<div class="empty"><b>پرامپت شما اینجا نمایش داده می‌شود</b>ایده را بنویسید و «تولید پرامپت» را بزنید.</div>';return}
   const text=renderPrompt(d.spec);
   resultBox.innerHTML='<div class="card raised result"><div class="row" style="justify-content:space-between"><h3 style="font-size:17px">'+esc(d.spec.title)+'</h3><span class="chip">'+esc(TYPES[d.spec.type].label)+'</span></div>'
    +'<div class="chips">'+d.spec.keywords.map(k=>'<span class="chip k">'+esc(k.label)+'</span>').join('')+d.spec.extras.map(w=>'<span class="chip w">'+esc(w)+'</span>').join('')+'</div>'
-   +'<div class="promptbox" tabindex="0">'+esc(text)+'</div>'
-   +'<div class="row"><button class="btn primary" type="button" id="rSend"'+(d.sent?' disabled':'')+'><svg><use href="#i-send"/></svg>'+(d.sent?'در صف تأیید است':'ارسال به صف تأیید')+'</button>'
-   +'<button class="btn" type="button" id="rCopy"><svg><use href="#i-copy"/></svg>کپی</button>'
-   +'<button class="btn" type="button" id="rTxt"><svg><use href="#i-dl"/></svg>TXT</button>'
-   +'<button class="btn" type="button" id="rJson"><svg><use href="#i-dl"/></svg>JSON</button></div>'
-   +'<p class="hint">پرامپت پس از ارسال در صف تأیید دیده می‌شود و بعد از تأیید می‌توانید خروجی را بسازید.</p></div>';
+   +'<div class="promptbox" tabindex="0" style="max-height:260px">'+esc(text)+'</div>'
+   +(d.sent
+     ?'<div class="okbox"><b>پرامپت به صف تأیید رفت.</b><span>قدم بعدی: در صف تأیید، پرامپت را تأیید کنید تا دکمه‌ی «ساخت خروجی» ظاهر شود.</span></div><div class="row"><button class="btn primary" type="button" id="rGoQ">رفتن به صف تأیید</button><button class="btn" type="button" id="rNew">ساخت پرامپت دیگر</button></div>'
+     :'<button class="btn primary" type="button" id="rSend" style="width:100%"><svg><use href="#i-send"/></svg>ارسال به صف تأیید</button><p class="hint">اگر پرامپت درست است ارسالش کنید. اگر نه، ایده را بالا تغییر دهید و دوباره بسازید.</p>')
+   +'<details class="more"><summary>ذخیره یا کپی پرامپت</summary><div class="row" style="margin-top:10px"><button class="btn sm" type="button" id="rCopy"><svg><use href="#i-copy"/></svg>کپی</button><button class="btn sm" type="button" id="rTxt"><svg><use href="#i-dl"/></svg>TXT</button><button class="btn sm" type="button" id="rJson"><svg><use href="#i-dl"/></svg>JSON</button></div></details></div>';
   $('#rCopy').onclick=()=>copyText(text,'پرامپت کپی شد');
   $('#rTxt').onclick=()=>offerFile(slug(d)+'.txt',text);
   $('#rJson').onclick=()=>offerFile(slug(d)+'.json',toJSONExport(d));
+  const gq=$('#rGoQ');if(gq)gq.onclick=()=>PS.go('queue');
+  const nw=$('#rNew');if(nw)nw.onclick=()=>{S.draft=null;fIdea.value='';fTitle.value='';drawKw();drawResult();fIdea.focus();PS.drawNext&&PS.drawNext()};
   const sb=$('#rSend');if(sb)sb.onclick=()=>{
     const u=me();
-    if(!u){toast('برای ارسال به صف، ابتدا وارد حساب شوید','bad');location.hash='account';return}
+    if(!u){toast('برای ارسال به صف، ابتدا وارد حساب شوید','bad');PS.go('account');return}
     if(PS.gate&&!PS.gate('ارسال به صف تأیید'))return;
     S.prompts.unshift({id:d.id,spec:d.spec,status:'pending',author:u.id,created:Date.now(),updated:Date.now(),note:''});
-    savePrompts();d.sent=true;drawResult();PS.drawQueue&&PS.drawQueue();toast('به صف تأیید اضافه شد','ok');
+    savePrompts();d.sent=true;drawResult();PS.drawQueue&&PS.drawQueue();PS.drawNext&&PS.drawNext();toast('به صف تأیید اضافه شد','ok');
   };
 }
 $('#genForm').addEventListener('submit',e=>{
@@ -871,24 +895,27 @@ const can={
 };
 function roleText(){
   const u=me();
-  if(!u)return 'برای تأیید، رد یا ویرایش پرامپت‌ها وارد حساب شوید. تا آن موقع فقط می‌توانید صف را ببینید.';
-  if(u.role!=='admin'&&!PS.subState(u).active)return 'اشتراک شما تمام شده است. می‌توانید پرامپت‌ها را ببینید و خروجی TXT یا JSON بگیرید، اما تأیید و ساخت خروجی نیاز به اشتراک فعال دارد.';
-  if(u.role==='admin')return 'شما ادمین هستید: همه‌ی پرامپت‌ها را تأیید، رد، ویرایش یا حذف می‌کنید. ردکردن همیشه با ثبت دلیل است.';
-  return 'شما اپراتور هستید: پرامپت‌های خودتان را ویرایش و تأیید می‌کنید و بعد از تأیید خروجی می‌سازید. ردکردن با ادمین است.';
+  if(!u)return 'برای تأیید پرامپت یا ساخت خروجی ابتدا وارد شوید.';
+  if(u.role!=='admin'&&!PS.subState(u).active)return 'اشتراک شما تمام شده است. پرامپت‌ها را می‌بینید، اما تأیید و ساخت خروجی نیاز به اشتراک دارد.';
+  if(u.role==='admin')return 'همه‌ی پرامپت‌ها اینجاست. هر کدام را تأیید یا رد کنید (رد با ذکر دلیل).';
+  return 'پرامپت‌های شما اینجاست. بعد از «تأیید پرامپت»، دکمه‌ی «ساخت خروجی» ظاهر می‌شود.';
 }
 function card(r,i){
-  const au=userById(r.author),sp=r.spec,acts=[];
-  if(can.build(r))acts.push('<button class="btn primary sm" data-act="build" data-id="'+r.id+'"><svg><use href="#i-play"/></svg>ساخت خروجی</button>');
-  if(can.approve(r))acts.push('<button class="btn teal sm" data-act="approve" data-id="'+r.id+'">تأیید</button>');
-  if(can.reject(r))acts.push('<button class="btn danger sm" data-act="reject" data-id="'+r.id+'">رد</button>');
-  if(isAdmin()&&r.status==='rejected')acts.push('<button class="btn sm" data-act="reopen" data-id="'+r.id+'">بازگشت به انتظار</button>');
-  if(can.edit(r))acts.push('<button class="btn sm" data-act="edit" data-id="'+r.id+'">ویرایش</button>');
-  if(can.del(r))acts.push('<button class="btn sm danger" data-act="del" data-id="'+r.id+'">حذف</button>');
+  const au=userById(r.author),sp=r.spec,prim=[],more=[];
+  const B=(act,label,cls)=>'<button class="btn '+(cls||'')+' sm" data-act="'+act+'" data-id="'+r.id+'">'+label+'</button>';
+  if(can.build(r))prim.push(B('build','<svg><use href="#i-play"/></svg>ساخت خروجی','primary'));
+  else if(can.approve(r))prim.push(B('approve','تأیید پرامپت','teal'));
+  if(can.reject(r))prim.push(B('reject','رد','danger'));
+  if(isAdmin()&&r.status==='rejected')prim.push(B('reopen','بازگشت به انتظار'));
+  if(can.edit(r))more.push(B('edit','ویرایش'));
+  more.push(B('copy','کپی'),B('txt','TXT'),B('json','JSON'));
+  if(can.del(r))more.push(B('del','حذف','danger'));
+  const hint=r.status==='approved'?'تأیید شد. حالا خروجی را بسازید.':r.status==='rejected'?'رد شد. دلیل را بخوانید، پرامپت را ویرایش کنید و دوباره بفرستید.':(can.approve(r)?'اگر پرامپت درست است «تأیید پرامپت» را بزنید.':'منتظر تأیید ادمین است.');
   return '<article class="q" style="animation-delay:'+(i*60)+'ms"><div class="q-top"><div><h3>'+esc(sp.title)+'</h3><div class="q-meta"><span>'+esc(E.TYPES[sp.type].label)+'</span><span>سازنده: '+esc(au?au.name:'کاربر حذف‌شده')+'</span><span>'+esc(fmtDate(r.updated))+'</span></div></div><span class="pill '+r.status+'">'+ST[r.status]+'</span></div>'
-   +'<div class="chips">'+sp.keywords.map(k=>'<span class="chip k">'+esc(k.label)+'</span>').join('')+'</div>'
+   +'<div class="q-hint">'+hint+'</div>'
    +(r.status==='rejected'&&r.note?'<div class="q-note">دلیل رد: '+esc(r.note)+'</div>':'')
-   +'<details><summary>مشاهده‌ی پرامپت</summary><div class="promptbox">'+esc(E.renderPrompt(sp))+'</div><div class="row" style="margin-top:10px"><button class="btn sm" data-act="copy" data-id="'+r.id+'"><svg><use href="#i-copy"/></svg>کپی</button><button class="btn sm" data-act="txt" data-id="'+r.id+'"><svg><use href="#i-dl"/></svg>TXT</button><button class="btn sm" data-act="json" data-id="'+r.id+'"><svg><use href="#i-dl"/></svg>JSON</button></div></details>'
-   +(acts.length?'<div class="q-actions">'+acts.join('')+'</div>':'')+'</article>';
+   +(prim.length?'<div class="q-actions">'+prim.join('')+'</div>':'')
+   +'<details class="more"><summary>مشاهده‌ی پرامپت و گزینه‌های بیشتر</summary><div class="promptbox" style="margin-top:10px">'+esc(E.renderPrompt(sp))+'</div><div class="q-actions" style="margin-top:10px">'+more.join('')+'</div></details></article>';
 }
 function draw(){
   $('#qRole').textContent=roleText();
@@ -896,6 +923,7 @@ function draw(){
   const names={all:'همه',pending:'در انتظار',approved:'تأییدشده',rejected:'ردشده'};
   $('#qTabs').innerHTML=Object.keys(names).map(k=>'<button class="tab'+(filter===k?' on':'')+'" type="button" role="tab" aria-selected="'+(filter===k)+'" data-f="'+k+'">'+names[k]+'<b>'+fa(c[k])+'</b></button>').join('');
   const list=S.prompts.filter(r=>filter==='all'||r.status===filter);
+  PS.drawNext&&PS.drawNext();
   $('#qList').innerHTML=list.length?list.map(card).join(''):'<div class="empty"><b>این بخش خالی است</b>پرامپتی با این وضعیت وجود ندارد. از بخش «ساخت پرامپت» یکی بفرستید.</div>';
 }
 PS.drawQueue=draw;
@@ -939,7 +967,7 @@ $('#qList').addEventListener('click',e=>{
   if(act==='copy')return copyText(E.renderPrompt(r.spec),'پرامپت کپی شد');
   if(act==='txt')return offerFile(slug(r)+'.txt',E.renderPrompt(r.spec));
   if(act==='json')return offerFile(slug(r)+'.json',E.toJSONExport(r));
-  if(!me()){toast('برای این کار وارد حساب شوید','bad');location.hash='account';return}
+  if(!me()){toast('برای این کار وارد حساب شوید','bad');PS.go('account');return}
   if((act==='approve'||act==='build')&&PS.gate&&!PS.gate(act==='build'?'ساخت خروجی':'تأیید پرامپت'))return;
   if(act==='approve'&&can.approve(r)){setStatus(r,'approved');toast('پرامپت تأیید شد؛ دکمه‌ی «ساخت خروجی» فعال شد','ok')}
   else if(act==='reject'&&can.reject(r))rejectSheet(r);
@@ -1285,10 +1313,10 @@ const planName=id=>(PLANS[id]&&PLANS[id].name)||'—';
 /* ---- قفل دسترسی: کارهای مهم نیاز به اشتراک فعال دارند ---- */
 PS.gate=function(what){
   const u=me();
-  if(!u){toast('ابتدا وارد حساب شوید','bad');location.hash='account';return false}
+  if(!u){toast('ابتدا وارد حساب شوید','bad');PS.go('account');return false}
   if(u.status!=='active'){toast('حساب شما مسدود است','bad');return false}
   if(subState(u).active)return true;
-  toast('اشتراک شما تمام شده است؛ برای «'+what+'» یک طرح تهیه کنید','bad');location.hash='plans';return false;
+  toast('اشتراک شما تمام شده است؛ برای «'+what+'» یک طرح تهیه کنید','bad');PS.go('plans');return false;
 };
 
 /* ---- نشان وضعیت در هدر ---- */
@@ -1311,7 +1339,7 @@ function priceOf(planId,code,u){
   return {base,disc,tax,total:base-disc+tax,msg,pct,ok:!!pct};
 }
 function checkout(planId){
-  const u=me();if(!u){toast('برای خرید وارد حساب شوید','bad');location.hash='account';return}
+  const u=me();if(!u){toast('برای خرید وارد حساب شوید','bad');PS.go('account');return}
   if(u.role==='admin'){toast('ادمین به اشتراک نیاز ندارد','bad');return}
   const p=PLANS[planId];let code='';
   const ov=openSheet('خرید: '+p.name,'<div id="coBody"></div>');
@@ -1510,7 +1538,7 @@ PS.field=field;PS.pwField=pwField;
 function drawWho(){
   const u=me(),b=$('#whoBtn');
   b.innerHTML=u?'<span class="av">'+esc(u.name.trim().charAt(0))+'</span><span>'+esc(u.name)+'</span>':'<span class="av">؟</span><span>ورود</span>';
-  b.onclick=()=>{location.hash='account'};
+  b.onclick=()=>{PS.go('account')};
 }
 function drawLockInfo(){
   const el=$('#lockTxt');if(!el)return;const k=(($('#lUser')||{}).value||'').trim().toLowerCase();
@@ -1539,11 +1567,12 @@ function loggedInHTML(u){
    +'<p class="hint" style="margin-bottom:14px">عضویت از '+esc(fmtDate(u.created))+' · آخرین ورود '+(u.lastLogin?esc(fmtDT(u.lastLogin)):'—')+'</p>'
    +'<form id="profF" novalidate>'+field('pName','نام','text','maxlength="40" value="'+esc(u.name)+'"')+field('pMail','ایمیل','email','dir="ltr" maxlength="60" value="'+esc(u.email)+'"')+field('pBio','درباره‌ی شما','text','maxlength="120" value="'+esc(u.bio||'')+'"')+'<div class="err" id="pErr" role="alert"></div><div class="row"><button class="btn primary" type="submit">ذخیره‌ی پروفایل</button><button class="btn" type="button" data-act="logout">خروج</button></div></form></div>'
    +'<div class="card"><h3 style="font-size:17px;margin-bottom:10px">اشتراک</h3><div class="row" style="justify-content:space-between"><span class="pill '+st.key+'">'+({trial:'آزمایشی',paid:'فعال',expired:'منقضی',admin:'ادمین'})[st.key]+'</span><span class="muted">'+(st.key==='admin'?'بدون محدودیت':st.key==='expired'?'تمام شده':fa(st.left)+' روز باقی است')+'</span><a class="btn sm" href="#plans">مدیریت اشتراک</a></div></div>'
+   +'<details class="adv"><summary>امنیت و تنظیمات پیشرفته</summary><div class="advgrid">'
    +'<div class="card"><h3 style="font-size:17px;margin-bottom:10px">تغییر رمز عبور</h3><form id="pwF" novalidate>'+pwField('cOld','رمز فعلی','current-password',false)+pwField('cNew','رمز جدید','new-password',true)+pwField('cNew2','تکرار رمز جدید','new-password',false)+'<div class="err" id="cErr" role="alert"></div><button class="btn" type="submit">تغییر رمز</button></form></div>'
    +'<div class="card"><h3 style="font-size:17px;margin-bottom:6px">ورود دو مرحله‌ای</h3><div class="row" style="margin-bottom:10px"><span class="pill '+(tf?'approved':'pending')+'">'+(tf?'فعال':'غیرفعال')+'</span>'+(tf?'<span class="hint">کدهای بازیابی باقی‌مانده: '+fa(u.totp.rec.length)+'</span>':'')+'</div><p class="hint" style="margin-bottom:12px">با یک برنامه‌ی Authenticator (مثل Google Authenticator یا Aegis) هنگام ورود کد ۶ رقمی می‌گیرد.</p><div class="row">'
    +(tf?'<button class="btn sm" type="button" data-act="tf-regen">کدهای بازیابی تازه</button><button class="btn sm danger" type="button" data-act="tf-off">غیرفعال‌سازی</button>':'<button class="btn teal" type="button" data-act="tf-start">فعال‌سازی</button>')+'</div></div>'
    +'<div class="card"><h3 style="font-size:17px;margin-bottom:6px">نشست‌ها</h3><p class="hint" style="margin-bottom:10px">نشست فعلی از '+esc(fmtDT(S.session.start))+' شروع شده و حداکثر تا ۸ ساعت اعتبار دارد. بی‌فعالیتی بیش از '+fa(idleMin)+' دقیقه آن را می‌بندد.</p><button class="btn sm" type="button" data-act="kill-others">بستن نشست‌های دیگر</button></div>'
-   +'<div class="card" style="border-color:color-mix(in srgb,var(--bad) 40%,transparent)"><h3 style="font-size:17px;margin-bottom:6px">حذف حساب</h3><p class="hint" style="margin-bottom:10px">این کار برگشت‌پذیر نیست. پرامپت‌های شما در صف می‌مانند.</p><div id="delArea"><button class="btn danger" type="button" data-act="del-start">حذف حساب من</button></div></div>';
+   +'<div class="card" style="border-color:color-mix(in srgb,var(--bad) 40%,transparent)"><h3 style="font-size:17px;margin-bottom:6px">حذف حساب</h3><p class="hint" style="margin-bottom:10px">این کار برگشت‌پذیر نیست. پرامپت‌های شما در صف می‌مانند.</p><div id="delArea"><button class="btn danger" type="button" data-act="del-start">حذف حساب من</button></div></div></div></details>';
 }
 function drawAccount(){
   const box=$('#accBox'),u=me();if(!box)return;
@@ -1552,7 +1581,7 @@ function drawAccount(){
 }
 function refresh(){
   drawWho();drawAccount();
-  PS.drawChip&&PS.drawChip();PS.drawPlans&&PS.drawPlans();PS.drawSecurity&&PS.drawSecurity();PS.drawQueue&&PS.drawQueue();PS.drawBot&&PS.drawBot();
+  PS.drawChip&&PS.drawChip();PS.drawPlans&&PS.drawPlans();PS.drawSecurity&&PS.drawSecurity();PS.drawQueue&&PS.drawQueue();PS.drawBot&&PS.drawBot();PS.drawNav&&PS.drawNav();PS.drawNext&&PS.drawNext();
 }
 PS.refresh=refresh;PS.drawAccount=drawAccount;
 
@@ -1879,7 +1908,7 @@ const unseen=()=>myTickets().filter(t=>t.reply&&!t.seen).length;
 /* ---- رابط ربات ---- */
 function bubble(m){
   let h='<div class="bm '+(m.r==='u'?'me':'bot')+'">'+esc(m.t).replace(/\n/g,'<br>');
-  if(m.link)h+='<div class="bl"><a class="btn sm" href="'+m.link[1]+'" data-botnav>'+esc(m.link[0])+'</a></div>';
+  if(m.link&&!(/#(security|guide)$/.test(m.link[1])&&!isAdmin()))h+='<div class="bl"><a class="btn sm" href="'+m.link[1]+'" data-botnav>'+esc(m.link[0])+'</a></div>';
   if(m.ticket)h+='<div class="bl"><button class="btn sm" type="button" data-bot="ticket">ثبت تیکت</button></div>';
   if(m.chips)h+='<div class="chips bl">'+SUGGEST.map(s=>'<button class="chip" type="button" data-q="'+esc(s)+'">'+esc(s)+'</button>').join('')+'</div>';
   return h+'</div>';
@@ -2137,11 +2166,6 @@ applyTheme(store.get('theme',null));
 $('#themeBtn').onclick=()=>{
   const cur=document.documentElement.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');
   const n=cur==='dark'?'light':'dark';applyTheme(n);store.set('theme',n)};
-if('IntersectionObserver' in window){
-  const links=$$('#nav a'),io=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){links.forEach(a=>a.classList.toggle('on',a.dataset.s===en.target.id));
-    const on=$('#nav a.on');if(on&&on.scrollIntoView)on.scrollIntoView({inline:'center',block:'nearest'})}})},{rootMargin:'-30% 0px -60% 0px'});
-  $$('main section[id]').forEach(s=>io.observe(s));
-}
 $('#sanIn').addEventListener('input',()=>{$('#sanOut').textContent=clean($('#sanIn').value,500)||'(خالی)'});
 $('#sanOut').textContent=clean($('#sanIn').value,500)||'(خالی)';
 
@@ -2149,5 +2173,65 @@ PS.drawSecurity=()=>{drawStatus();drawList();drawAudit();drawBackup();checkChain
 drawGuide();
 PS.refresh();
 if(!PS.cryptoOK)toast('این مرورگر رمزنگاری امن ندارد؛ ورود و ثبت‌نام کار نمی‌کند. صفحه را روی HTTPS باز کنید.','bad');
+})();
+/* ===== صفحه‌بندی: هر منو یک صفحه، منوی ساده برای اپراتور، نوار «قدم بعدی» ===== */
+(function(){
+'use strict';
+const {$,$$,toast,S,me,isAdmin,esc,subState}=PS;
+const VIEWS=['home','tool','queue','account','plans','security','guide'];
+const ADMIN_ONLY=['security','guide'];
+const BAR_VIEWS=['home','tool','queue'];
+let cur='home';
+const allowed=id=>VIEWS.includes(id)&&(!ADMIN_ONLY.includes(id)||isAdmin());
+
+function drawNav(){
+  $$('#nav a').forEach(a=>{const s=a.dataset.s;a.hidden=ADMIN_ONLY.includes(s)&&!isAdmin();a.classList.toggle('on',s===cur);if(s===cur)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  if(!allowed(cur))go('home',{quiet:true});
+}
+function go(id,o){
+  o=o||{};
+  if(!VIEWS.includes(id))id='home';
+  if(!allowed(id)){if(!o.quiet)toast('این بخش فقط برای ادمین است','bad');id='home'}
+  cur=id;
+  $$('main section[id]').forEach(s=>{s.hidden=s.id!==id});
+  drawNav();drawNext();
+  if(!o.noScroll)window.scrollTo(0,0);
+  try{history.replaceState(null,'','#'+id)}catch(e){}
+  const on=$('#nav a.on');if(on&&on.scrollIntoView)on.scrollIntoView({inline:'center',block:'nearest'});
+}
+
+/* ---- نوار قدم بعدی ---- */
+function drawNext(){
+  const bar=$('#nextBar');if(!bar)return;
+  if(!BAR_VIEWS.includes(cur)){bar.hidden=true;return}
+  const u=me();let act=0,msg,btn=null;
+  const mine=u?S.prompts.filter(p=>isAdmin()||p.author===u.id):[];
+  const appr=mine.find(p=>p.status==='approved'),pend=mine.filter(p=>p.status==='pending'),rej=mine.find(p=>p.status==='rejected');
+  const t=p=>'«'+esc(p.spec.title)+'»';
+  if(!u){msg='قدم اول: وارد شوید یا ثبت‌نام کنید. ۱۴ روز اول رایگان است.';btn=['ورود یا ثبت‌نام','account']}
+  else if(u.role!=='admin'&&!subState(u).active){msg='اشتراک شما تمام شده است. برای تأیید و ساخت خروجی اشتراک بگیرید.';btn=['مشاهده‌ی طرح‌ها','plans']}
+  else if(isAdmin()){
+    if(pend.length){act=1;msg=PS.fa(pend.length)+' پرامپت منتظر تصمیم شماست.';btn=['رفتن به صف تأیید','queue']}
+    else{act=2;msg='همه‌ی پرامپت‌ها بررسی شده‌اند.';btn=['ساخت پرامپت جدید','tool']}
+  }
+  else if(appr){act=2;msg='پرامپت '+t(appr)+' تأیید شده است. حالا «ساخت خروجی» را بزنید.';btn=['رفتن به ساخت خروجی','queue']}
+  else if(pend.length){act=1;msg='پرامپت '+t(pend[0])+' منتظر تأیید است. تأییدش کنید.';btn=['رفتن به صف تأیید','queue']}
+  else if(rej){act=1;msg='پرامپت '+t(rej)+' رد شده است. دلیل را ببینید و ویرایشش کنید.';btn=['دیدن دلیل رد','queue']}
+  else{act=0;msg='ایده‌ی خود را بنویسید و پرامپت بسازید.';btn=['ساخت پرامپت','tool']}
+  const steps=['ایده','تأیید','خروجی'];
+  bar.hidden=false;
+  bar.innerHTML='<div class="steps3" aria-label="مراحل کار">'+steps.map((s,i)=>'<span class="'+(i<act?'done':i===act?'on':'')+'">'+PS.fa(i+1)+'. '+s+'</span>').join('')+'</div><div class="nbrow"><span>'+msg+'</span>'+(btn&&btn[1]!==cur?'<button class="btn primary sm" type="button" data-go="'+btn[1]+'">'+btn[0]+'</button>':'')+'</div>';
+}
+
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]');if(g){go(g.dataset.go);return}
+  const a=e.target.closest('a[href^="#"]');if(!a)return;
+  const id=a.getAttribute('href').slice(1);if(VIEWS.includes(id)){e.preventDefault();go(id)}
+});
+addEventListener('hashchange',()=>{const id=location.hash.slice(1);if(VIEWS.includes(id)&&id!==cur)go(id)});
+
+PS.go=go;PS.drawNav=drawNav;PS.drawNext=drawNext;
+const h=location.hash.slice(1);
+go(VIEWS.includes(h)?h:'home',{noScroll:true,quiet:true});
 })();
 </script>
