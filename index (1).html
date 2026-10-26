@@ -1,0 +1,1975 @@
+<title>پرامپت‌ساز</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<style>
+/* Layout: dark, single-column mobile flow; sticky header with scrolling nav pills; tool = form + live result; queue = filterable cards; builder = bottom sheet.
+   Color: ink-indigo ground, indigo primary, teal for "done/working" accents. Type: Vazirmatn throughout, mono for code. */
+:root{
+  --bg:#0a0c1a; --bg2:#0f1226; --surface:#131733; --surface2:#1b2047; --line:rgba(143,152,255,.18);
+  --fg:#eceeff; --muted:#a3a9d6; --indigo:#8a91ff; --indigo-d:#6a72f5; --teal:#2fd9c3;
+  --good:#3fd8a0; --warn:#f6c453; --bad:#ff7b92; --on-accent:#0a0c1a;
+  --glow:rgba(138,145,255,.2); --glow2:rgba(47,217,195,.14); --shadow:0 14px 44px rgba(2,3,20,.5);
+  --code-bg:#080a18; --font:'Vazirmatn',Tahoma,'Segoe UI',system-ui,sans-serif; --mono:ui-monospace,Menlo,Consolas,monospace;
+  --r:18px; --r-sm:12px; color-scheme:dark;
+}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  --bg:#f3f4ff; --bg2:#eaecff; --surface:#ffffff; --surface2:#eff0ff; --line:rgba(60,70,180,.17);
+  --fg:#171a3d; --muted:#545a8c; --indigo:#4a52e0; --indigo-d:#3b42c4; --teal:#0b7f75;
+  --good:#0c8a5f; --warn:#9a6a00; --bad:#c42b4a; --on-accent:#ffffff;
+  --glow:rgba(74,82,224,.12); --glow2:rgba(11,127,117,.1); --shadow:0 12px 36px rgba(40,50,140,.14);
+  --code-bg:#f5f6ff; color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#f3f4ff; --bg2:#eaecff; --surface:#ffffff; --surface2:#eff0ff; --line:rgba(60,70,180,.17);
+  --fg:#171a3d; --muted:#545a8c; --indigo:#4a52e0; --indigo-d:#3b42c4; --teal:#0b7f75;
+  --good:#0c8a5f; --warn:#9a6a00; --bad:#c42b4a; --on-accent:#ffffff;
+  --glow:rgba(74,82,224,.12); --glow2:rgba(11,127,117,.1); --shadow:0 12px 36px rgba(40,50,140,.14);
+  --code-bg:#f5f6ff; color-scheme:light}
+:root[data-theme="dark"]{
+  --bg:#0a0c1a; --bg2:#0f1226; --surface:#131733; --surface2:#1b2047; --line:rgba(143,152,255,.18);
+  --fg:#eceeff; --muted:#a3a9d6; --indigo:#8a91ff; --indigo-d:#6a72f5; --teal:#2fd9c3;
+  --good:#3fd8a0; --warn:#f6c453; --bad:#ff7b92; --on-accent:#0a0c1a;
+  --glow:rgba(138,145,255,.2); --glow2:rgba(47,217,195,.14); --shadow:0 14px 44px rgba(2,3,20,.5);
+  --code-bg:#080a18; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:120px}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.85;
+  padding-block:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-text-size-adjust:100%;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--bg)}
+h1,h2,h3,h4{line-height:1.45;margin:0;text-wrap:balance;font-weight:800}
+p{margin:0}
+a{color:var(--teal)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:8px}
+.wrap{max-width:1080px;margin-inline:auto}
+.mono{font-family:var(--mono);direction:ltr;unicode-bidi:isolate}
+.muted{color:var(--muted)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* header */
+.hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));
+  padding-inline:max(16px,env(safe-area-inset-left,0px));background:color-mix(in srgb,var(--bg) 86%,transparent);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.hdr-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:10px 4px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;color:var(--fg);text-decoration:none}
+.brand svg{width:34px;height:34px;flex:none}
+.hdr-actions{display:flex;align-items:center;gap:8px}
+.nav{display:flex;gap:6px;overflow-x:auto;padding-block:6px 10px;scrollbar-width:none;margin-inline:-4px;padding-inline:4px}
+.nav::-webkit-scrollbar{display:none}
+.nav a{flex:none;padding:6px 14px;border-radius:999px;color:var(--muted);text-decoration:none;font-size:13.5px;font-weight:500;border:1px solid transparent;transition:.2s}
+.nav a:hover{color:var(--fg);background:var(--surface)}
+.nav a.on{color:var(--on-accent);background:var(--indigo);font-weight:700}
+.icon-btn{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer}
+.who{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:13px;max-width:190px}
+.who span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;background:var(--teal);color:var(--on-accent);flex:none}
+
+/* sections */
+section.sec{padding-block:clamp(36px,7vw,72px);border-top:1px solid var(--line)}
+section.sec:first-of-type{border-top:0}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--teal);font-weight:700;font-size:13px;letter-spacing:.02em;margin-bottom:10px}
+.eyebrow::before{content:"";width:22px;height:2px;background:var(--teal);border-radius:2px}
+.sec-h{font-size:clamp(23px,5.2vw,34px);margin-bottom:8px}
+.sec-p{color:var(--muted);max-width:62ch;margin-bottom:26px}
+
+/* hero */
+.hero-sec{overflow-x:clip}
+.hero{position:relative;padding-block:clamp(30px,7vw,70px) clamp(30px,6vw,56px);display:grid;gap:30px;grid-template-columns:minmax(0,1fr)}
+.hero::before{content:"";position:absolute;inset:-30% -20% auto auto;width:70%;height:90%;background:radial-gradient(closest-side,var(--glow),transparent);z-index:-1;pointer-events:none}
+.hero::after{content:"";position:absolute;inset:auto auto -10% -10%;width:60%;height:70%;background:radial-gradient(closest-side,var(--glow2),transparent);z-index:-1;pointer-events:none}
+.hero h1{font-size:clamp(30px,8.4vw,54px);letter-spacing:-.01em}
+.hero h1 em{font-style:normal;color:var(--teal)}
+.hero .lead{color:var(--muted);font-size:clamp(15px,3.8vw,18px);max-width:54ch;margin-top:14px}
+.cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.audience{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.audience span{font-size:12.5px;color:var(--muted);border:1px dashed var(--line);padding:3px 12px;border-radius:999px}
+.flow{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:var(--shadow);display:grid;gap:0;align-self:start}
+.flow-i{display:grid;grid-template-columns:34px 1fr;gap:12px;position:relative;padding-bottom:18px}
+.flow-i:last-child{padding-bottom:0}
+.flow-i::before{content:"";position:absolute;inset-inline-start:16px;top:34px;bottom:0;width:2px;background:var(--line)}
+.flow-i:last-child::before{display:none}
+.dot{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px;background:var(--surface2);border:1px solid var(--line);color:var(--indigo)}
+.flow-i.done .dot{background:var(--teal);color:var(--on-accent);border-color:transparent}
+.flow-i h4{font-size:14.5px}
+.flow-i p{font-size:13px;color:var(--muted);line-height:1.7}
+.flow-i .chips{margin-top:8px}
+@media(min-width:860px){.hero{grid-template-columns:1.15fr .85fr;align-items:center}}
+.rise{animation:rise .7s cubic-bezier(.2,.7,.2,1) both}
+.rise.d2{animation-delay:.12s}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* controls */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 20px;border-radius:14px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:700;font-size:14.5px;text-decoration:none;color:var(--fg);transition:transform .15s,background .2s,box-shadow .2s}
+.btn:hover{background:var(--surface2)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--indigo);color:var(--on-accent);border-color:transparent;box-shadow:0 8px 22px var(--glow)}
+.btn.primary:hover{background:var(--indigo-d);color:#fff}
+.btn.teal{background:var(--teal);color:var(--on-accent);border-color:transparent}
+.btn.danger{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 45%,transparent)}
+.btn.sm{min-height:36px;padding:4px 14px;font-size:13px;border-radius:11px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn svg{width:17px;height:17px;flex:none}
+.field{display:grid;gap:6px;margin-bottom:14px}
+.field>label,.lbl{font-size:13px;font-weight:700;color:var(--muted)}
+.inp{width:100%;padding:11px 14px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--bg2);min-height:46px}
+textarea.inp{min-height:132px;resize:vertical;line-height:1.9}
+.inp:focus{border-color:var(--indigo);outline:none;box-shadow:0 0 0 3px var(--glow)}
+.hint{font-size:12.5px;color:var(--muted)}
+.err{font-size:13px;color:var(--bad);min-height:20px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.grid2{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:720px){.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:clamp(16px,4vw,26px);min-width:0}
+.card.raised{box-shadow:var(--shadow)}
+.types{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(min-width:560px){.types{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.types label{cursor:pointer}
+.types input{position:absolute;opacity:0;pointer-events:none}
+.types .t{display:grid;gap:4px;justify-items:center;text-align:center;padding:14px 8px;border-radius:var(--r-sm);border:1.5px solid var(--line);background:var(--bg2);font-weight:700;font-size:13.5px;transition:.2s;height:100%}
+.types .t svg{width:26px;height:26px;color:var(--indigo)}
+.types .t small{font-weight:400;color:var(--muted);font-size:11.5px;line-height:1.5}
+.types input:checked+.t{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 12%,var(--bg2));box-shadow:0 0 0 3px var(--glow2)}
+.types input:focus-visible+.t{outline:2px solid var(--teal);outline-offset:2px}
+
+/* chips + pills */
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{display:inline-flex;align-items:center;padding:2px 12px;border-radius:999px;font-size:12.5px;font-weight:500;border:1px solid var(--line);background:var(--surface2);color:var(--fg);animation:pop .3s both}
+.chip.k{background:color-mix(in srgb,var(--teal) 16%,transparent);border-color:color-mix(in srgb,var(--teal) 50%,transparent);color:var(--teal);font-weight:700}
+.chip.w{color:var(--muted);border-style:dashed;background:transparent}
+@keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:1px 12px;border-radius:999px;font-size:12.5px;font-weight:700;border:1px solid currentColor}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.pending{color:var(--warn)} .pill.approved{color:var(--good)} .pill.rejected{color:var(--bad)}
+
+/* result / prompt */
+.result{display:grid;gap:14px}
+.promptbox{background:var(--code-bg);border:1px solid var(--line);border-radius:var(--r-sm);padding:16px;max-height:380px;overflow:auto;white-space:pre-wrap;font-size:13.5px;line-height:1.95;word-break:break-word}
+.empty{border:1.5px dashed var(--line);border-radius:var(--r);padding:30px 18px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--fg);margin-bottom:4px}
+.tool-grid{display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:960px){.tool-grid{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:start}}
+
+/* queue */
+.tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:16px;scrollbar-width:none;padding-bottom:2px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:6px 16px;border-radius:999px;cursor:pointer;font-weight:700;font-size:13.5px}
+.tab b{margin-inline-start:6px;color:var(--fg)}
+.tab.on{background:var(--indigo);color:var(--on-accent);border-color:transparent}
+.tab.on b{color:var(--on-accent)}
+.qlist{display:grid;gap:14px}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;gap:12px;min-width:0;animation:rise .45s both}
+.q-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:flex-start}
+.q h3{font-size:16.5px}
+.q-meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted)}
+.q-note{font-size:13px;color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent);border-radius:10px;padding:6px 12px}
+.q-actions{display:flex;flex-wrap:wrap;gap:8px}
+.q details summary{cursor:pointer;color:var(--indigo);font-weight:700;font-size:13.5px;list-style:none}
+.q details summary::-webkit-details-marker{display:none}
+.q details[open] summary{margin-bottom:10px}
+.editgrid{display:grid;gap:10px}
+
+/* tables, lists */
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
+.tbl th,.tbl td{text-align:start;padding:10px 12px;border-bottom:1px solid var(--line)}
+.tbl th{color:var(--muted);font-weight:700;font-size:12.5px}
+.scroll-x{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-sm)}
+.check{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.check li{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--bg2)}
+.check input{width:20px;height:20px;accent-color:var(--teal);margin-top:4px}
+.check .auto{font-size:11.5px;font-weight:700;color:var(--teal);border:1px solid var(--teal);border-radius:999px;padding:0 10px;align-self:center}
+.check b{display:block;font-size:14px}
+.check small{color:var(--muted);font-size:12.5px;line-height:1.7;display:block}
+.meter{height:8px;border-radius:99px;background:var(--surface2);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--teal);border-radius:99px;transition:width .5s}
+.stat{display:grid;gap:2px}
+.stat b{font-size:22px}
+.stat span{font-size:12.5px;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+
+/* guide */
+.steps{display:grid;gap:14px;counter-reset:s;padding:0;margin:0;list-style:none}
+.steps>li{counter-increment:s;display:grid;grid-template-columns:38px minmax(0,1fr);gap:14px}
+.steps>li::before{content:counter(s);width:38px;height:38px;border-radius:12px;background:var(--indigo);color:var(--on-accent);display:grid;place-items:center;font-weight:800}
+.steps h4{font-size:16px;margin-bottom:4px}
+.steps p{color:var(--muted);font-size:14px;margin-bottom:10px}
+.code{position:relative;background:var(--code-bg);border:1px solid var(--line);border-radius:var(--r-sm);margin-block:8px}
+.code pre{margin:0;padding:14px 14px 14px 64px;overflow-x:auto;direction:ltr;text-align:left;font-family:var(--mono);font-size:12.8px;line-height:1.8;white-space:pre}
+.code button{position:absolute;top:8px;left:8px;border:1px solid var(--line);background:var(--surface);border-radius:9px;font-size:12px;padding:2px 10px;cursor:pointer;color:var(--fg)}
+.callout{border:1px solid color-mix(in srgb,var(--warn) 50%,transparent);background:color-mix(in srgb,var(--warn) 9%,transparent);padding:12px 16px;border-radius:var(--r-sm);font-size:13.5px}
+
+/* footer */
+.foot{border-top:1px solid var(--line);padding-block:30px calc(30px + env(safe-area-inset-bottom,0px));color:var(--muted);font-size:13px;display:grid;gap:10px}
+.foot .row{justify-content:space-between}
+
+/* sheet + toast */
+.ov{position:fixed;inset:0;z-index:80;background:rgba(3,4,16,.66);backdrop-filter:blur(4px);display:grid;align-items:end;justify-items:center;animation:fade .2s both}
+.sheet{width:min(1000px,100%);max-height:94dvh;overflow:auto;background:var(--bg2);border:1px solid var(--line);border-radius:24px 24px 0 0;padding:18px max(16px,env(safe-area-inset-left,0px)) calc(24px + env(safe-area-inset-bottom,0px));animation:up .35s cubic-bezier(.2,.8,.2,1) both}
+@media(min-width:760px){.ov{align-items:center}.sheet{border-radius:24px;padding:24px 28px}}
+.sheet-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;position:sticky;top:-18px;background:var(--bg2);padding-block:6px;z-index:2}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.toasts{position:fixed;inset-inline:0;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:90;display:grid;justify-items:center;gap:8px;pointer-events:none;padding-inline:16px}
+.toast{background:var(--surface2);border:1px solid var(--line);box-shadow:var(--shadow);padding:10px 18px;border-radius:14px;font-size:14px;max-width:min(440px,100%);animation:up .3s both}
+.toast.ok{border-color:var(--good)} .toast.bad{border-color:var(--bad)}
+
+/* preview frames */
+.stage{display:grid;place-items:center;padding:18px;border-radius:var(--r);background:radial-gradient(closest-side,var(--glow),transparent),var(--surface);border:1px solid var(--line);overflow:hidden}
+.phone{width:min(300px,100%);aspect-ratio:300/600;border-radius:38px;border:8px solid #20244a;background:#000;overflow:hidden;box-shadow:var(--shadow);position:relative}
+.phone iframe{width:100%;height:100%;border:0;background:#fff}
+.phone::before{content:"";position:absolute;top:6px;left:50%;translate:-50% 0;width:70px;height:16px;border-radius:99px;background:#20244a;z-index:2}
+.win,.browser{width:100%;max-width:760px;border-radius:12px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);background:#fff}
+.win-bar,.br-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#20244a;color:#e8eaff;font-size:12px;direction:ltr}
+.win-bar i,.br-bar i{width:10px;height:10px;border-radius:50%;background:#ff7b92;display:inline-block}
+.win-bar i:nth-child(2),.br-bar i:nth-child(2){background:#f6c453}.win-bar i:nth-child(3),.br-bar i:nth-child(3){background:#3fd8a0}
+.br-bar span{flex:1;background:#0d1030;border-radius:99px;padding:1px 12px;text-align:center;color:#a3a9d6}
+.win iframe,.browser iframe{width:100%;height:440px;border:0;background:#fff;display:block}
+.dl-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin-top:14px}
+.dl{display:grid;gap:2px;text-align:start;padding:14px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface);cursor:pointer}
+.dl:hover{border-color:var(--teal)}
+.dl b{font-size:14px}.dl small{color:var(--muted);font-size:12px;line-height:1.7}
+.fallback{display:grid;gap:8px;margin-top:12px}
+/* password meter + toggle */
+.pwrow{position:relative}.pwrow .inp{padding-inline-end:68px}
+.pwtoggle{position:absolute;inset-inline-end:8px;top:50%;translate:0 -50%;border:0;background:var(--surface2);color:var(--muted);border-radius:9px;font-size:12px;padding:3px 10px;cursor:pointer}
+.pwm{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:6px}
+.pwm i{height:5px;border-radius:9px;background:var(--surface2);transition:background .25s}
+.pwm[data-s="1"] i:nth-child(1){background:var(--bad)}
+.pwm[data-s="2"] i:nth-child(-n+2){background:var(--warn)}
+.pwm[data-s="3"] i:nth-child(-n+3){background:var(--teal)}
+.pwm[data-s="4"] i{background:var(--good)}
+/* plans */
+.plans{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:860px){.plans{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.plan{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px 20px;display:grid;gap:10px;align-content:start;min-width:0}
+.plan.pop{border-color:var(--teal);box-shadow:0 0 0 3px var(--glow2),var(--shadow)}
+.plan h3{font-size:17px}
+.price{font-size:28px;font-weight:800;line-height:1.3}.price small{font-size:13px;font-weight:500;color:var(--muted)}
+.plist{margin:4px 0 8px;padding:0;list-style:none;display:grid;gap:6px;font-size:13.5px;color:var(--muted)}
+.plist li{padding-inline-start:20px;position:relative}
+.plist li::before{content:"";position:absolute;inset-inline-start:0;top:.72em;width:10px;height:6px;border-inline-start:2px solid var(--teal);border-bottom:2px solid var(--teal);rotate:-45deg;translate:0 -50%}
+.ribbon{position:absolute;top:-11px;inset-inline-start:18px;background:var(--teal);color:var(--on-accent);font-size:12px;font-weight:800;border-radius:999px;padding:1px 12px}
+.planchip{display:inline-flex;align-items:center;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;text-decoration:none;border:1px solid currentColor;white-space:nowrap}
+.planchip.trial{color:var(--indigo)}.planchip.paid,.planchip.admin{color:var(--good)}.planchip.expired{color:var(--bad)}
+@media(max-width:620px){.planchip{display:none}}
+.pill.trial{color:var(--indigo)}.pill.paid{color:var(--good)}.pill.expired,.pill.suspended{color:var(--bad)}.pill.admin{color:var(--teal)}
+/* user admin + audit */
+.ulist{display:grid;gap:10px}
+.urow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--bg2)}
+.urow .av{width:38px;height:38px}
+.aud{display:grid;gap:6px;max-height:340px;overflow:auto}
+.aud>div{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;font-size:12.5px;padding:7px 10px;border-radius:10px;background:var(--bg2);line-height:1.7}
+.aud>div.bad{border-inline-start:3px solid var(--bad)}
+.aud .mono{font-size:12px;color:var(--muted)}
+.check .auto.no{color:var(--bad);border-color:var(--bad)}
+.hl{font-size:clamp(18px,4.4vw,22px);margin:30px 0 12px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+<div id="app" dir="rtl" lang="fa">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-android" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></symbol>
+<symbol id="i-windows" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+<symbol id="i-site" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.3 3 14.7 0 18M12 3c-3 3.3-3 14.7 0 18"/></symbol>
+<symbol id="i-html" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 8l-4.5 4L8 16M16 8l4.5 4L16 16M13.5 5l-3 14"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A2.5 2.5 0 017.5 4H15"/></symbol>
+<symbol id="i-dl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 11L12 15.5 16.5 11M5 20h14"/></symbol>
+<symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3L10.5 13.5M21 3l-6.5 18-4-7.5L3 9.5z"/></symbol>
+<symbol id="i-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></symbol>
+<symbol id="i-theme" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 119.5 4a7 7 0 0010.5 10.5z"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5v15l12-7.5z"/></symbol>
+</defs></svg>
+
+<header class="hdr">
+  <div class="wrap">
+    <div class="hdr-row">
+      <a class="brand" href="#home" aria-label="پرامپت‌ساز، صفحه اصلی">
+        <svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="12" fill="var(--indigo)"/><path d="M12 28V12h8.5a5 5 0 010 10H16" fill="none" stroke="var(--on-accent)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M27 24.5l1.4 3.6 3.6 1.4-3.6 1.4L27 34.5l-1.4-3.6-3.6-1.4 3.6-1.4z" fill="var(--teal)" transform="translate(-1 -6)"/></svg>
+        <span>پرامپت‌ساز</span>
+      </a>
+      <div class="hdr-actions">
+        <a class="planchip" id="planChip" href="#plans" hidden></a>
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="تغییر تم روشن و تیره"><svg width="18" height="18"><use href="#i-theme"/></svg></button>
+        <button class="who" id="whoBtn" type="button"></button>
+      </div>
+    </div>
+    <nav class="nav" id="nav" aria-label="منوی اصلی">
+      <a href="#home" data-s="home" class="on">خانه</a>
+      <a href="#tool" data-s="tool">ساخت پرامپت</a>
+      <a href="#queue" data-s="queue">صف تأیید</a>
+      <a href="#account" data-s="account">حساب کاربری</a>
+      <a href="#plans" data-s="plans">اشتراک</a>
+      <a href="#security" data-s="security">امنیت</a>
+      <a href="#guide" data-s="guide">راهنمای انتشار</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+<section class="sec hero-sec" id="home">
+  <div class="hero">
+    <div>
+      <div class="eyebrow rise">ابزار اپراتورها</div>
+      <h1 class="rise">ایده‌ی خام را به <em>پرامپت ساخت</em> حرفه‌ای تبدیل کنید</h1>
+      <p class="lead rise d2">ایده را بنویسید، پرامپت ساختاریافته با هدف، مخاطب، صفحات، قابلیت‌ها و سبک بصری بگیرید، تأییدش کنید و همان‌جا سایت یا اپلیکیشن آماده‌ی دانلود تحویل بگیرید.</p>
+      <div class="cta rise d2">
+        <a class="btn primary" href="#tool"><svg><use href="#i-spark"/></svg>شروع ساخت پرامپت</a>
+        <a class="btn" href="#queue">مشاهده صف تأیید</a>
+      </div>
+      <div class="audience rise d2"><span>اپراتورهای تولید محتوا</span><span>مدیران محصول</span><span>تیم‌های کوچک نرم‌افزاری</span></div>
+    </div>
+    <div class="flow rise d2" aria-label="مراحل کار">
+      <div class="flow-i"><div class="dot">۱</div><div><h4>ایده‌ی خام</h4><p>«اپ رزرو نوبت آرایشگاه با پرداخت آنلاین»</p><div class="chips"><span class="chip k">رزرو</span><span class="chip k">پرداخت</span><span class="chip k">آرایشگاه</span></div></div></div>
+      <div class="flow-i"><div class="dot">۲</div><div><h4>پرامپت ساختاریافته</h4><p>هدف، مخاطب، صفحات، قابلیت‌ها و سبک بصری، آماده‌ی ویرایش.</p></div></div>
+      <div class="flow-i"><div class="dot">۳</div><div><h4>تأیید در صف</h4><p>در انتظار، تأییدشده یا ردشده، با ثبت وضعیت.</p></div></div>
+      <div class="flow-i"><div class="dot">۴</div><div><h4>ساخت خروجی</h4><p>اندروید، ویندوز، سایت یا HTML، با پیش‌نمایش و دانلود.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="tool">
+  <div class="eyebrow">ساخت پرامپت</div>
+  <h2 class="sec-h">ایده را بنویسید، پرامپت را تحویل بگیرید</h2>
+  <p class="sec-p">کلمات کلیدی ایده هم‌زمان با نوشتن استخراج می‌شوند و صفحات و قابلیت‌های پیشنهادی بر اساس آن‌ها ساخته می‌شود.</p>
+  <div class="tool-grid">
+    <form class="card raised" id="genForm" autocomplete="off" novalidate>
+      <div class="field"><label for="fTitle">عنوان پروژه (اختیاری)</label><input class="inp" id="fTitle" maxlength="60" placeholder="مثلاً: اپ رزرو نوبت آرایشگاه"></div>
+      <div class="field"><label for="fIdea">ایده‌ی شما</label>
+        <textarea class="inp" id="fIdea" maxlength="800" placeholder="ایده را با جمله‌های ساده بنویسید..."></textarea>
+        <div class="row" style="justify-content:space-between"><span class="hint">نمونه‌ی بالا فقط برای شروع است؛ آن را عوض کنید.</span><span class="hint mono" id="cnt">0/800</span></div>
+      </div>
+      <div class="field"><span class="lbl" id="typeLbl">نوع خروجی</span>
+        <div class="types" role="radiogroup" aria-labelledby="typeLbl">
+          <label><input type="radio" name="otype" value="android" checked><span class="t"><svg><use href="#i-android"/></svg>اندروید<small>پروژه آماده و PWA</small></span></label>
+          <label><input type="radio" name="otype" value="windows"><span class="t"><svg><use href="#i-windows"/></svg>ویندوز<small>برنامه دسکتاپ</small></span></label>
+          <label><input type="radio" name="otype" value="site"><span class="t"><svg><use href="#i-site"/></svg>سایت<small>چندبخشی و واکنش‌گرا</small></span></label>
+          <label><input type="radio" name="otype" value="html"><span class="t"><svg><use href="#i-html"/></svg>HTML<small>یک فایل مستقل</small></span></label>
+        </div>
+      </div>
+      <div class="field"><span class="lbl">کلمات کلیدی استخراج‌شده</span><div class="chips" id="kwBox" aria-live="polite"></div></div>
+      <div class="err" id="genErr" role="alert"></div>
+      <button class="btn primary" type="submit" style="width:100%"><svg><use href="#i-spark"/></svg>تولید پرامپت</button>
+    </form>
+    <div id="resultBox" class="result" aria-live="polite"></div>
+  </div>
+</section>
+
+<section class="sec" id="queue">
+  <div class="eyebrow">صف تأیید</div>
+  <h2 class="sec-h">پرامپت‌ها منتظر تصمیم شما هستند</h2>
+  <p class="sec-p" id="qRole"></p>
+  <div class="tabs" id="qTabs" role="tablist"></div>
+  <div class="qlist" id="qList"></div>
+</section>
+
+<section class="sec" id="account">
+  <div class="eyebrow">حساب کاربری</div>
+  <h2 class="sec-h">ورود، نقش‌ها و مدیریت پروفایل</h2>
+  <p class="sec-p">حساب‌ها شبیه‌سازی‌شده‌اند و فقط در مرورگر همین دستگاه ذخیره می‌شوند. رمزها به‌صورت هش نگهداری می‌شوند.</p>
+  <div id="accBox"></div>
+</section>
+
+<section class="sec" id="plans">
+  <div class="eyebrow">اشتراک</div>
+  <h2 class="sec-h">۱۴ روز رایگان، بعد طرح دلخواه شما</h2>
+  <p class="sec-p">هر حساب جدید ۱۴ روز دسترسی کامل می‌گیرد. بعد از آن، تأیید پرامپت و ساخت خروجی نیاز به اشتراک دارد. پرداخت در این نسخه نمایشی است.</p>
+  <div id="planBox"></div>
+</section>
+
+<section class="sec" id="security">
+  <div class="eyebrow">امنیت</div>
+  <h2 class="sec-h">لایه‌های محافظ و چک‌لیست انتشار</h2>
+  <p class="sec-p">ورودی‌ها پاک‌سازی می‌شوند، تلاش‌های ناموفق ورود محدود است و نشست بی‌فعالیت خودکار بسته می‌شود.</p>
+  <div class="grid2">
+    <div class="card" id="secStatus"></div>
+    <div class="card">
+      <h3 style="font-size:17px;margin-bottom:6px">آزمایش پاک‌سازی ورودی</h3>
+      <p class="hint" style="margin-bottom:10px">متنی با تگ یا اسکریپت وارد کنید و خروجی امن را ببینید.</p>
+      <div class="field"><label for="sanIn">ورودی</label><textarea class="inp" id="sanIn" style="min-height:84px">سلام &lt;script&gt;alert(1)&lt;/script&gt; <b onclick="x()">فروشگاه</b> javascript:evil()</textarea></div>
+      <div class="lbl" style="margin-bottom:6px">خروجی پاک‌سازی‌شده</div>
+      <div class="promptbox" id="sanOut" style="max-height:120px;min-height:48px"></div>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="card" id="auditBox"></div>
+    <div class="card" id="backupBox"></div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <div class="row" style="justify-content:space-between;margin-bottom:12px"><h3 style="font-size:17px">چک‌لیست امنیتی</h3><span class="hint" id="secScore"></span></div>
+    <div class="meter" style="margin-bottom:14px"><i id="secBar" style="width:0"></i></div>
+    <ul class="check" id="secList"></ul>
+  </div>
+</section>
+
+<section class="sec" id="guide">
+  <div class="eyebrow">راهنمای انتشار</div>
+  <h2 class="sec-h">انتشار روی GitHub Pages، گام‌به‌گام</h2>
+  <p class="sec-p">این ابزار یک فایل HTML ایستا است و بدون سرور روی GitHub Pages اجرا می‌شود. به‌جای <span class="mono">USERNAME</span> نام کاربری GitHub خودتان را بگذارید.</p>
+  <ol class="steps">
+    <li><div><h4>ساخت مخزن</h4><p>در GitHub روی New repository بزنید، نام <span class="mono">promptsaz</span> را بنویسید، گزینه Public را نگه دارید و README نسازید.</p></div></li>
+    <li><div><h4>آماده‌کردن پوشه و فایل</h4><p>فایل HTML این ابزار را با نام <span class="mono">index.html</span> داخل یک پوشه‌ی تازه بگذارید و دستورهای زیر را اجرا کنید.</p>
+      <div class="code"><button type="button" data-copy="mkdir promptsaz && cd promptsaz&#10;git init&#10;git add index.html&#10;git commit -m &quot;first version&quot;&#10;git branch -M main">کپی</button><pre>mkdir promptsaz &amp;&amp; cd promptsaz
+git init
+git add index.html
+git commit -m "first version"
+git branch -M main</pre></div></div></li>
+    <li><div><h4>اتصال به GitHub و ارسال</h4><p>آدرس مخزن را وصل کنید و فایل‌ها را بفرستید. اگر GitHub CLI نصب دارید، دستور دوم همین کار را یک‌جا انجام می‌دهد.</p>
+      <div class="code"><button type="button" data-copy="git remote add origin https://github.com/USERNAME/promptsaz.git&#10;git push -u origin main">کپی</button><pre>git remote add origin https://github.com/USERNAME/promptsaz.git
+git push -u origin main</pre></div>
+      <div class="code"><button type="button" data-copy="gh repo create promptsaz --public --source=. --push">کپی</button><pre>gh repo create promptsaz --public --source=. --push</pre></div></div></li>
+    <li><div><h4>فعال‌سازی Pages</h4><p>در مخزن به Settings، سپس Pages بروید. در بخش Source گزینه Deploy from a branch را انتخاب کنید، شاخه <span class="mono">main</span> و پوشه <span class="mono">/ (root)</span> را بزنید و Save کنید.</p></div></li>
+    <li><div><h4>باز کردن سایت</h4><p>بعد از یک یا دو دقیقه سایت در این آدرس در دسترس است:</p>
+      <div class="code"><button type="button" data-copy="https://USERNAME.github.io/promptsaz/">کپی</button><pre>https://USERNAME.github.io/promptsaz/</pre></div></div></li>
+    <li><div><h4>به‌روزرسانی‌های بعدی</h4><p>بعد از هر تغییر در فایل، این سه دستور نسخه‌ی جدید را منتشر می‌کند.</p>
+      <div class="code"><button type="button" data-copy="git add .&#10;git commit -m &quot;update&quot;&#10;git push">کپی</button><pre>git add .
+git commit -m "update"
+git push</pre></div></div></li>
+    <li><div><h4>دامنه‌ی اختصاصی و HTTPS</h4><p>در همان صفحه Pages، فیلد Custom domain را پر کنید و گزینه Enforce HTTPS را روشن کنید.</p>
+      <div class="callout">حساب‌ها و صف تأیید در localStorage مرورگر هر بازدیدکننده ذخیره می‌شوند و بین دستگاه‌ها هم‌گام نیستند. برای تیم واقعی چندکاربره به بک‌اند و احراز هویت سمت سرور نیاز دارید.</div></div></li>
+  </ol>
+
+  <h3 class="hl">ساخت اپلیکیشن اندروید در GitHub</h3>
+  <p class="sec-p">لازم نیست Android Studio نصب کنید. خروجی اندروید پرامپت‌ساز یک گردش‌کار GitHub Actions دارد و بعد از push، APK را خودش می‌سازد.</p>
+  <ol class="steps">
+    <li><div><h4>گرفتن پروژه‌ی اندروید</h4><p>در بخش «صف تأیید»، پرامپتی را که تأیید شده بازکنید، «ساخت خروجی» را بزنید و «دانلود پروژه‌ی اندروید (ZIP)» را بگیرید. فایل ZIP را از حالت فشرده خارج کنید.</p></div></li>
+    <li><div><h4>ساخت مخزن</h4><p>در GitHub یک مخزن تازه بسازید (نوع Private پیشنهاد می‌شود) و README نسازید. بعد در پوشه‌ی بازشده:</p>
+      <div class="code"><button type="button" data-copy="git init&#10;git add .&#10;git commit -m &quot;android app&quot;&#10;git branch -M main&#10;git remote add origin https://github.com/USERNAME/my-android-app.git&#10;git push -u origin main">کپی</button><pre>git init
+git add .
+git commit -m "android app"
+git branch -M main
+git remote add origin https://github.com/USERNAME/my-android-app.git
+git push -u origin main</pre></div></div></li>
+    <li><div><h4>اجرای گردش‌کار</h4><p>به تب Actions مخزن بروید. گردش‌کار «Build Android APK» خودکار اجرا می‌شود و ۳ تا ۶ دقیقه طول می‌کشد. اگر اجرا نشد، آن را انتخاب و Run workflow را بزنید.</p></div></li>
+    <li><div><h4>دانلود APK</h4><p>وقتی اجرا سبز شد، وارد آن شوید. در پایین صفحه بخش Artifacts فایل <span class="mono">android-apk</span> را دانلود کنید. APK داخل یک فایل ZIP است.</p></div></li>
+    <li><div><h4>نسخه‌ی رسمی در Releases</h4><p>با ساخت یک تگ، APK خودکار به صفحه‌ی Releases اضافه می‌شود.</p>
+      <div class="code"><button type="button" data-copy="git tag v1.0.0&#10;git push origin v1.0.0">کپی</button><pre>git tag v1.0.0
+git push origin v1.0.0</pre></div></div></li>
+    <li><div><h4>نصب روی گوشی</h4><p>فایل APK را به گوشی منتقل کنید و اجازه‌ی نصب از این منبع را بدهید. بدون کلید امضا، APK با امضای آزمایشی (debug) ساخته می‌شود که برای تست خوب است ولی برای فروشگاه‌ها مناسب نیست.</p></div></li>
+    <li><div><h4>امضای نسخه‌ی نهایی (اختیاری)</h4><p>یک keystore بسازید، آن را base64 کنید و در Settings > Secrets and variables > Actions چهار مقدار <span class="mono">KEYSTORE_B64</span>، <span class="mono">KEYSTORE_PASSWORD</span>، <span class="mono">KEY_ALIAS</span> و <span class="mono">KEY_PASSWORD</span> را بگذارید. با وجود این‌ها گردش‌کار خودکار نسخه‌ی release امضاشده می‌سازد.</p>
+      <div class="code"><button type="button" data-copy="keytool -genkeypair -v -keystore release.jks -alias app -keyalg RSA -keysize 2048 -validity 10000&#10;base64 -w0 release.jks">کپی</button><pre>keytool -genkeypair -v -keystore release.jks -alias app -keyalg RSA -keysize 2048 -validity 10000
+base64 -w0 release.jks</pre></div>
+      <div class="callout">فایل keystore و رمزها را هرگز در مخزن commit نکنید. فایل <span class="mono">.gitignore</span> پروژه فایل‌های jks را کنار می‌گذارد، ولی مسئولیت نگه‌داری نسخه‌ی پشتیبان کلید با خودتان است؛ با گم‌شدن آن دیگر نمی‌توانید برنامه را به‌روز کنید.</div></div></li>
+  </ol>
+  <details style="margin-top:14px"><summary class="btn" style="display:inline-flex;list-style:none;cursor:pointer">مشاهده‌ی فایل گردش‌کار (android.yml)</summary><div id="wfBox" style="margin-top:10px"></div></details>
+
+  <h3 class="hl">اپ اندروید خود پرامپت‌ساز</h3>
+  <p class="sec-p">بعد از انتشار این ابزار روی GitHub Pages، می‌توانید آن را به‌شکل یک اپ اندروید هم بسازید. آدرس سایت خود را بنویسید تا پروژه‌ی آماده (با همان گردش‌کار ساخت) دانلود شود. برنامه فقط به همان دامنه اجازه‌ی ناوبری می‌دهد و بقیه‌ی پیوندها را در مرورگر باز می‌کند.</p>
+  <div class="card" style="max-width:640px">
+    <div class="field"><label for="apkUrl">آدرس سایت (HTTPS)</label><input class="inp" id="apkUrl" dir="ltr" placeholder="https://USERNAME.github.io/promptsaz/" maxlength="120" autocomplete="off"></div>
+    <div class="err" id="apkErr" role="alert"></div>
+    <button class="btn primary" type="button" id="apkGen"><svg><use href="#i-dl"/></svg>دانلود پروژه‌ی اندروید پرامپت‌ساز</button>
+  </div>
+</section>
+</main>
+
+<footer class="wrap foot">
+  <div class="row"><b style="color:var(--fg)">پرامپت‌ساز</b><span>نسخه‌ی نمایشی برای اپراتورها</span></div>
+  <div>داده‌ها فقط در مرورگر همین دستگاه می‌مانند. خروجی‌های ساخته‌شده پروژه‌ی آماده‌ی اجرا هستند، نه فایل نصبی کامپایل‌شده.</div>
+</footer>
+<div id="ovMount"></div>
+<div class="toasts" id="toasts" role="status"></div>
+</div>
+<script>
+/* ===== پرامپت‌ساز: هسته (ذخیره‌سازی، رمزنگاری، ممیزی، اشتراک) ===== */
+(function(){
+'use strict';
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+document.documentElement.dir='rtl'; document.documentElement.lang='fa';
+
+/* ---- ذخیره‌سازی (حافظه فقط وقتی localStorage در دسترس نیست) ---- */
+const mem={};
+const store={
+  get(k,d){try{const v=localStorage.getItem('ps:'+k);return v==null?d:JSON.parse(v)}catch(e){return k in mem?mem[k]:d}},
+  set(k,v){mem[k]=v;try{localStorage.setItem('ps:'+k,JSON.stringify(v))}catch(e){}},
+  del(k){delete mem[k];try{localStorage.removeItem('ps:'+k)}catch(e){}}
+};
+
+/* ---- پاک‌سازی ورودی ---- */
+function clean(s,max){
+  s=String(s==null?'':s).normalize('NFC')
+   .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F‎‏‪-‮⁦-⁩]/g,'')
+   .replace(/<\s*(script|style|iframe|object|embed)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi,'')
+   .replace(/<[^>]*>?/g,'')
+   .replace(/\b(javascript|vbscript|data)\s*:/gi,'')
+   .replace(/\bon[a-z]+\s*=/gi,'')
+   .replace(/[ \t]{2,}/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+  return max?s.slice(0,max):s;
+}
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fa=n=>String(n).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+const money=n=>{try{return new Intl.NumberFormat('fa-IR').format(n)}catch(e){return fa(n)}};
+const norm=s=>String(s||'').replace(/ي/g,'ی').replace(/ك/g,'ک').replace(/[‌ً-ٟ]/g,' ').replace(/\s+/g,' ').toLowerCase();
+const rand=n=>crypto.getRandomValues(new Uint8Array(n));
+const uid=()=>Date.now().toString(36)+Array.from(rand(5),b=>b.toString(36).padStart(2,'0')).join('').slice(0,7);
+
+/* ---- رمزنگاری: PBKDF2 (نسخه‌ی ۲) و هش قدیمی فقط برای مهاجرت ---- */
+const te=new TextEncoder();
+const b64=buf=>{let s='';new Uint8Array(buf).forEach(c=>s+=String.fromCharCode(c));return btoa(s)};
+const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const hex=buf=>[...new Uint8Array(buf)].map(x=>x.toString(16).padStart(2,'0')).join('');
+const ITER=150000;
+const cryptoOK=!!(window.crypto&&crypto.subtle&&crypto.getRandomValues);
+async function sha256(str){return hex(await crypto.subtle.digest('SHA-256',te.encode(str)))}
+async function pbkdf2(pw,saltB64,iter){
+  const k=await crypto.subtle.importKey('raw',te.encode(pw),'PBKDF2',false,['deriveBits']);
+  return b64(await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:unb64(saltB64),iterations:iter||ITER},k,256));
+}
+function safeEq(a,b){a=String(a);b=String(b);let d=a.length^b.length;for(let i=0;i<Math.max(a.length,b.length);i++)d|=(a.charCodeAt(i)||0)^(b.charCodeAt(i)||0);return d===0}
+function h53(str,seed){let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+  return (4294967296*(2097151&h2)+(h1>>>0)).toString(16)}
+function legacyHash(pw,salt){let o=salt+pw;for(let i=0;i<600;i++)o=h53(o,i%7)+salt.slice(i%salt.length);return h53(o,1)+h53(o,2)}
+async function hashPw(pw){const salt=b64(rand(16));return {salt,pass:await pbkdf2(pw,salt),v:2}}
+async function verifyPw(u,pw){
+  if(!u||!cryptoOK)return false;
+  if(u.v===2)return safeEq(await pbkdf2(pw,u.salt),u.pass);
+  return safeEq(legacyHash(pw,u.salt),u.pass);
+}
+async function dummyVerify(pw){try{await pbkdf2(pw,'AAAAAAAAAAAAAAAAAAAAAA==')}catch(e){}}
+
+/* ---- پیام‌ها و پنجره‌ها ---- */
+function toast(msg,kind){const t=document.createElement('div');t.className='toast '+(kind||'');t.textContent=msg;$('#toasts').appendChild(t);setTimeout(()=>t.remove(),3400)}
+async function copyText(text,okMsg){
+  try{await navigator.clipboard.writeText(text);toast(okMsg||'کپی شد','ok');return true}catch(e){}
+  const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0;top:0';document.body.appendChild(ta);ta.select();
+  let ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();
+  toast(ok?(okMsg||'کپی شد'):'کپی خودکار ممکن نشد؛ متن را انتخاب و دستی کپی کنید',ok?'ok':'bad');return ok;
+}
+async function saveFile(filename,data){
+  let dl=null;try{dl=await window.claude.use('downloads')}catch(e){}
+  if(!dl){return {fallback:true}}
+  try{await dl.save({filename,data});toast('فایل ذخیره شد: '+filename,'ok');return {ok:true}}
+  catch(e){if(e&&e.code==='declined'){toast('ذخیره لغو شد');return {ok:false}}
+    if(e&&(e.code==='unavailable'||e.code==='not_granted'||e.code==='capability_disabled'))return {fallback:true};
+    toast('ذخیره‌ی فایل انجام نشد','bad');return {ok:false}}
+}
+function openSheet(title,html,opts){
+  opts=opts||{};closeSheet();
+  const ov=document.createElement('div');ov.className='ov';ov.id='ov';ov._lock=!!opts.lock;ov._onClose=opts.onClose||null;
+  ov.innerHTML='<div class="sheet" role="dialog" aria-modal="true" aria-label="'+esc(title)+'"><div class="sheet-h"><h3 style="font-size:18px">'+esc(title)+'</h3>'+(opts.lock?'':'<button class="icon-btn" type="button" data-close aria-label="بستن">✕</button>')+'</div><div id="sheetBody">'+html+'</div></div>';
+  ov.addEventListener('click',e=>{if(ov._lock)return;if(e.target===ov||e.target.closest('[data-close]'))closeSheet()});
+  $('#ovMount').appendChild(ov);document.body.style.overflow='hidden';
+  const f=$('input,textarea,select,[data-close]',ov);f&&f.focus();return ov;
+}
+function closeSheet(force){const o=$('#ov');if(!o)return;if(o._lock&&!force)return;const f=o._onClose;o.remove();document.body.style.overflow='';f&&f()}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
+
+/* ---- ثابت‌ها: طرح‌ها و کاربران نمونه ---- */
+const NOW=Date.now(), DAY=864e5;
+const PLANS={
+  trial:{id:'trial',name:'آزمایشی ۱۴ روزه',days:14,price:0},
+  month:{id:'month',name:'حرفه‌ای ماهانه',days:30,price:290000},
+  year:{id:'year',name:'حرفه‌ای سالانه',days:365,price:2900000}
+};
+const SEED_USERS=[
+  {id:'u-sara',name:'سارا احمدی',username:'sara',email:'sara@example.ir',role:'admin',bio:'مدیر محصول و ادمین صف تأیید',created:NOW-40*DAY,salt:'2bVvGMrgpvooMWW/KSyF0A==',pass:'0v6maVT/lAjm/D+Cszx1iZyx8F3Tlxven/IvYGHnb9w='},
+  {id:'u-reza',name:'رضا کریمی',username:'reza',email:'reza@example.ir',role:'operator',bio:'اپراتور تولید محتوا',created:NOW-25*DAY,salt:'1g7e5mQ3YIGz5045Bp39OQ==',pass:'Rweo6EDItAV13ULJbDHV5SMAQ97zVHJkCJpVlKotTkU='}
+];
+const SEED_PASS={sara:'0v6maVT/lAjm/D+Cszx1iZyx8F3Tlxven/IvYGHnb9w=',reza:'Rweo6EDItAV13ULJbDHV5SMAQ97zVHJkCJpVlKotTkU='};
+function newTrial(days){const now=Date.now();return {plan:'trial',trialStart:days?now:0,trialEnd:days?now+days*DAY:0,trialUsed:!!days,paidUntil:0,autoRenew:false,history:[],coupons:[]}}
+function normalizeUser(u){
+  u.status=u.status==='suspended'?'suspended':'active';
+  u.v=u.v===2?2:1; u.sv=u.sv||1; u.lastLogin=u.lastLogin||0; u.mustChange=!!u.mustChange;
+  if(!u.totp||typeof u.totp!=='object')u.totp={on:false,secret:'',last:0,rec:[]};
+  if(!u.sub||typeof u.sub!=='object')u.sub=u.role==='admin'?{plan:'admin',trialStart:0,trialEnd:0,trialUsed:true,paidUntil:0,autoRenew:false,history:[],coupons:[]}:newTrial(14);
+  if(!Array.isArray(u.sub.history))u.sub.history=[]; if(!Array.isArray(u.sub.coupons))u.sub.coupons=[];
+  return u;
+}
+function seedUsers(){return SEED_USERS.map(s=>{
+  const u=Object.assign({},s,{v:2});
+  u.sub=s.role==='admin'?{plan:'admin',trialStart:0,trialEnd:0,trialUsed:true,paidUntil:0,autoRenew:false,history:[],coupons:[]}
+    :{plan:'trial',trialStart:NOW-5*DAY,trialEnd:NOW+9*DAY,trialUsed:true,paidUntil:0,autoRenew:false,history:[],coupons:[]};
+  return normalizeUser(u)})}
+
+const S={
+  users:store.get('users',null),
+  prompts:store.get('prompts',null),
+  session:store.get('session',null),
+  draft:null, reauthAt:0
+};
+if(!Array.isArray(S.users)||!S.users.length){S.users=seedUsers();store.set('users',S.users)}
+S.users.forEach(normalizeUser);
+const saveUsers=()=>store.set('users',S.users), savePrompts=()=>store.set('prompts',S.prompts);
+const me=()=>S.session?S.users.find(u=>u.id===S.session.uid)||null:null;
+const isAdmin=()=>{const u=me();return !!u&&u.role==='admin'&&u.status==='active'};
+const userById=id=>S.users.find(u=>u.id===id);
+const fmtDate=ts=>{try{return new Intl.DateTimeFormat('fa-IR',{dateStyle:'medium'}).format(new Date(ts))}catch(e){return new Date(ts).toLocaleDateString()}};
+const fmtDT=ts=>{try{return new Intl.DateTimeFormat('fa-IR',{dateStyle:'short',timeStyle:'short'}).format(new Date(ts))}catch(e){return new Date(ts).toLocaleString()}};
+
+/* ---- وضعیت اشتراک ---- */
+function subState(u){
+  if(!u)return {key:'none',active:false,left:0};
+  if(u.role==='admin')return {key:'admin',active:true,left:Infinity};
+  const s=u.sub||{},now=Date.now();
+  if(s.paidUntil>now)return {key:'paid',active:true,until:s.paidUntil,left:Math.ceil((s.paidUntil-now)/DAY),plan:s.plan};
+  if(s.trialEnd>now)return {key:'trial',active:true,until:s.trialEnd,left:Math.ceil((s.trialEnd-now)/DAY)};
+  return {key:'expired',active:false,left:0};
+}
+
+/* ---- تلاش‌های ورود با قفل تصاعدی ---- */
+const att=()=>store.get('att',{});
+function lockLeft(key){const a=att()[key];return a&&a.until&&a.until>Date.now()?Math.ceil((a.until-Date.now())/1000):0}
+function failAttempt(key,limit){
+  const a=att(),r=a[key]||{n:0,until:0,level:0,total:0};
+  if(r.until&&r.until<=Date.now()){r.n=0;r.until=0}
+  r.n++;r.total=(r.total||0)+1;
+  if(r.n>=(limit||5)){r.level=Math.min((r.level||0)+1,5);r.until=Date.now()+Math.min(60000*Math.pow(2,r.level-1),15*60000);r.n=0}
+  a[key]=r;store.set('att',a);return r;
+}
+function clearAttempt(key){const a=att();if(a[key]){a[key].n=0;a[key].until=0;a[key].level=0;store.set('att',a)}}
+
+/* ---- ممیزی با زنجیره‌ی هش ---- */
+let audQ=Promise.resolve();
+function audit(type,detail,actor){
+  const who=actor||(S.session&&S.session.uid)||'-';
+  audQ=audQ.then(async()=>{
+    const a=store.get('audit',{base:'0',entries:[]});
+    const prev=a.entries.length?a.entries[a.entries.length-1].hash:a.base;
+    const e={ts:Date.now(),type,actor:who,detail:clean(String(detail||''),160),prev};
+    e.hash=await sha256(prev+'|'+e.ts+'|'+e.type+'|'+e.actor+'|'+e.detail);
+    a.entries.push(e);while(a.entries.length>300)a.base=a.entries.shift().hash;
+    store.set('audit',a);PS.onAudit&&PS.onAudit();
+  }).catch(()=>{});
+  return audQ;
+}
+async function verifyAudit(){
+  const a=store.get('audit',{base:'0',entries:[]});let prev=a.base;
+  for(let i=0;i<a.entries.length;i++){const e=a.entries[i];
+    if(e.prev!==prev||e.hash!==await sha256(prev+'|'+e.ts+'|'+e.type+'|'+e.actor+'|'+e.detail))return {ok:false,at:i,total:a.entries.length};prev=e.hash}
+  return {ok:true,total:a.entries.length};
+}
+
+/* ---- تأیید مجدد هویت برای کارهای حساس (۵ دقیقه معتبر) ---- */
+function reauth(reason){
+  const u=me();if(!u)return Promise.resolve(false);
+  if(Date.now()-S.reauthAt<5*60000)return Promise.resolve(true);
+  return new Promise(res=>{
+    const ov=openSheet('تأیید هویت','<p class="hint" style="margin-bottom:12px">'+esc(reason||'این کار حساس است؛ رمز عبور خود را دوباره وارد کنید.')+'</p><div class="field"><label for="raPw">رمز عبور شما</label><input class="inp" id="raPw" type="password" dir="ltr" autocomplete="current-password" maxlength="64"></div><div class="err" id="raErr" role="alert"></div><div class="row"><button class="btn primary" id="raOk" type="button">تأیید</button><button class="btn" data-close type="button">انصراف</button></div>',{onClose:()=>res(false)});
+    const go=async()=>{
+      const key='reauth:'+u.id,left=lockLeft(key);if(left){$('#raErr',ov).textContent='تلاش زیاد بود؛ '+fa(left)+' ثانیه صبر کنید.';return}
+      const b=$('#raOk',ov);b.disabled=true;
+      const ok=await verifyPw(u,$('#raPw',ov).value);b.disabled=false;
+      if(!ok){failAttempt(key);audit('reauth_fail','@'+u.username);$('#raErr',ov).textContent='رمز درست نیست.';return}
+      clearAttempt(key);S.reauthAt=Date.now();res(true);closeSheet(true);
+    };
+    $('#raOk',ov).onclick=go;$('#raPw',ov).addEventListener('keydown',e=>{if(e.key==='Enter')go()});
+  });
+}
+
+const PS=window.PS={$,$$,store,clean,esc,fa,money,norm,uid,rand,b64,unb64,hex,sha256,pbkdf2,safeEq,legacyHash,hashPw,verifyPw,dummyVerify,cryptoOK,ITER,
+  toast,copyText,saveFile,openSheet,closeSheet,S,saveUsers,savePrompts,me,isAdmin,userById,fmtDate,fmtDT,NOW,DAY,seedUsers,normalizeUser,newTrial,PLANS,SEED_PASS,
+  subState,att,lockLeft,failAttempt,clearAttempt,audit,verifyAudit,reauth};
+})();
+/* ===== موتور پرامپت + ابزار ساخت ===== */
+(function(){
+'use strict';
+const {$,$$,clean,esc,fa,norm,uid,toast,copyText,saveFile,openSheet,S,savePrompts,me,store,NOW,DAY}=PS;
+
+const TYPES={android:{label:'اپلیکیشن اندروید',noun:'اپلیکیشن اندروید'},windows:{label:'برنامه‌ی دسکتاپ ویندوز',noun:'برنامه‌ی دسکتاپ ویندوز'},site:{label:'وب‌سایت',noun:'وب‌سایت'},html:{label:'صفحه‌ی HTML تک‌فایل',noun:'صفحه‌ی HTML مستقل'}};
+const STYLES={
+  indigo:{id:'indigo',name:'مدرن و تیره با نیلی و فیروزه‌ای',bg:'#0b0e22',surface:'#151a3a',fg:'#eceeff',muted:'#a3a9d6',accent:'#8a91ff',accent2:'#2fd9c3',dark:true},
+  rose:{id:'rose',name:'روشن و گرم با رز و هلویی',bg:'#fff8f6',surface:'#ffffff',fg:'#3a1f2b',muted:'#85626f',accent:'#c2456f',accent2:'#e8a07f',dark:false},
+  fresh:{id:'fresh',name:'روشن و تازه با فیروزه‌ای و سبز',bg:'#f2fbf9',surface:'#ffffff',fg:'#0f2f2c',muted:'#4d7571',accent:'#0d9488',accent2:'#65a30d',dark:false},
+  amber:{id:'amber',name:'گرم و دلنشین با کهربایی',bg:'#fffaf0',surface:'#ffffff',fg:'#3a2406',muted:'#7d6334',accent:'#d97706',accent2:'#b91c1c',dark:false},
+  slate:{id:'slate',name:'تیره‌ی داده‌محور با آبی روشن',bg:'#0c1322',surface:'#141f36',fg:'#e6edf8',muted:'#93a4c2',accent:'#38bdf8',accent2:'#34d399',dark:true},
+  shop:{id:'shop',name:'روشن و تمیز با بنفش‌آبی',bg:'#f7f7ff',surface:'#ffffff',fg:'#1b1d3f',muted:'#5b5f8f',accent:'#5b5bf0',accent2:'#0ea5a4',dark:false}
+};
+/* واژه‌نامه‌ی موضوع‌ها: کلید → صفحات، قابلیت‌ها، مخاطب و داده‌ی نمونه */
+const TOPICS=[
+ {id:'beauty',label:'آرایشگاه و زیبایی',m:['آرایشگاه','سالن','زیبایی','آرایش','ناخن','مو'],aud:'مشتریان سالن‌های زیبایی و آرایشگاه‌ها',style:'rose',act:'رزرو خدمت',pages:['خدمات و قیمت‌ها','گالری نمونه‌کار'],feat:['پروفایل آرایشگر و نظرات مشتریان'],items:[['کوتاهی و براشینگ','۳۵۰ هزار تومان'],['رنگ و مش','۱٫۸ میلیون تومان'],['مانیکور ژل','۴۲۰ هزار تومان'],['کراتینه','۲٫۴ میلیون تومان']]},
+ {id:'booking',label:'رزرو و نوبت',m:['رزرو','نوبت','وقت ملاقات','قرار ملاقات','نوبت دهی','نوبتدهی'],aud:'کاربرانی که می‌خواهند بدون تماس تلفنی وقت بگیرند',act:'رزرو نوبت',pages:['انتخاب خدمت و زمان','نوبت‌های من'],feat:['تقویم زمان‌های آزاد','جلوگیری از رزرو هم‌زمان','لغو و تغییر نوبت','یادآور پیامکی قبل از نوبت']},
+ {id:'shop',label:'فروشگاه',m:['فروشگاه','فروش','خرید','محصول','سبد','کالا','مغازه','بازارچه'],aud:'خریداران آنلاین',style:'shop',act:'خرید محصول',pages:['ویترین و محصولات','سبد خرید و تسویه‌حساب'],feat:['جستجو و فیلتر محصول','سبد خرید ماندگار','کد تخفیف','مدیریت موجودی'],items:[['کیف چرمی دست‌دوز','۹۸۰ هزار تومان'],['سرامیک نقش‌دار','۳۲۰ هزار تومان'],['شال ترمه','۶۵۰ هزار تومان'],['جعبه‌ی هدیه','۱۸۰ هزار تومان']]},
+ {id:'payment',label:'پرداخت',m:['پرداخت','درگاه','کیف پول','فاکتور','صورتحساب','تراکنش'],aud:'',act:'پرداخت',pages:['پرداخت و فاکتور'],feat:['اتصال به درگاه پرداخت','صدور فاکتور','پیگیری تراکنش']},
+ {id:'dash',label:'داشبورد و گزارش',m:['داشبورد','گزارش','آمار','نمودار','تحلیل','شاخص'],aud:'مدیران و تحلیلگرانی که تصمیم بر پایه‌ی عدد می‌گیرند',style:'slate',act:'مشاهده گزارش',pages:['داشبورد خلاصه','گزارش‌ها'],feat:['نمودارهای زنده','فیلتر بازه‌ی زمانی','خروجی اکسل']},
+ {id:'auth',label:'عضویت و حساب',m:['ثبت نام','ثبتنام','عضویت','ورود','پروفایل','کاربران','حساب کاربری'],aud:'',act:'ورود',pages:['ورود و ثبت‌نام','پروفایل'],feat:['ورود با شماره موبایل','نقش‌های دسترسی']},
+ {id:'chat',label:'گفتگو و پشتیبانی',m:['چت','گفتگو','پیام رسان','تیکت','پشتیبانی'],aud:'',act:'ارسال پیام',pages:['گفتگو و پشتیبانی'],feat:['پیام لحظه‌ای','پیوست فایل','تاریخچه‌ی گفتگو']},
+ {id:'edu',label:'آموزش',m:['آموزش','دوره','کلاس','یادگیری','مدرس','درس'],aud:'زبان‌آموزان و دانشجویان',style:'fresh',act:'شروع درس',pages:['فهرست دوره‌ها','پخش درس و پیشرفت'],feat:['پیگیری پیشرفت','آزمون پایان درس','گواهی پایان دوره'],items:[['مبانی طراحی رابط','۱۲ درس'],['بازاریابی محتوا','۸ درس'],['مدیریت پروژه‌ی چابک','۱۰ درس'],['نوشتن حرفه‌ای','۶ درس']]},
+ {id:'food',label:'رستوران و کافه',m:['رستوران','غذا','کافه','منو','سفارش غذا','فست فود'],aud:'مشتریان رستوران و کافه',style:'amber',act:'ثبت سفارش',pages:['منو','سفارش و پیگیری'],feat:['منوی دسته‌بندی‌شده','ردیابی وضعیت سفارش','سفارش دوباره'],items:[['چلوکباب کوبیده','۳۲۰ هزار تومان'],['زرشک‌پلو با مرغ','۲۴۰ هزار تومان'],['سالاد شیرازی','۸۵ هزار تومان'],['دوغ محلی','۴۵ هزار تومان']]},
+ {id:'content',label:'محتوا و وبلاگ',m:['وبلاگ','مقاله','محتوا','خبر','بلاگ','نشریه'],aud:'خوانندگان و مخاطبان محتوا',act:'خواندن مقاله',pages:['فهرست مقالات','صفحه‌ی مقاله'],feat:['دسته‌بندی و برچسب','جستجوی متن','اشتراک‌گذاری','نظرات'],items:[['راهنمای شروع تولید محتوا','۶ دقیقه'],['چطور ایده را به محصول می‌رسانیم','۹ دقیقه'],['یادداشتی درباره‌ی طراحی فارسی','۴ دقیقه'],['۱۰ اشتباه رایج در انتشار','۷ دقیقه']]},
+ {id:'health',label:'سلامت و درمان',m:['پزشک','دکتر','درمان','سلامت','بیمار','کلینیک','دندان'],aud:'بیماران و مراجعان کلینیک',style:'fresh',act:'گرفتن وقت',pages:['فهرست پزشکان','پرونده‌ی من'],feat:['پروفایل پزشک','پرونده‌ی ساده‌ی بیمار','یادآور مصرف دارو'],items:[['دکتر مریم صادقی، پوست','۴٫۸ از ۵'],['دکتر امید رحیمی، دندان','۴٫۶ از ۵'],['دکتر نگار فرهادی، تغذیه','۴٫۹ از ۵'],['دکتر کیان منصوری، چشم','۴٫۷ از ۵']]},
+ {id:'estate',label:'املاک',m:['ملک','املاک','اجاره','آپارتمان','رهن','مسکن'],aud:'خریداران و مستأجران',act:'یافتن ملک',pages:['فهرست آگهی‌ها','جزئیات ملک'],feat:['فیلتر قیمت و متراژ','ذخیره‌ی علاقه‌مندی‌ها','تماس با مشاور'],items:[['آپارتمان ۸۵ متری، سعادت‌آباد','۱۲ میلیارد تومان'],['واحد ۶۰ متری، پونک','۶٫۵ میلیارد تومان'],['ویلا ۳۰۰ متری، لواسان','۳۴ میلیارد تومان'],['دفتر ۴۰ متری، ونک','۹٫۲ میلیارد تومان']]},
+ {id:'tasks',label:'مدیریت وظایف',m:['وظیفه','تسک','پروژه','کانبان','تیم','برد'],aud:'تیم‌های کوچک نرم‌افزاری و محتوایی',style:'slate',act:'ثبت وظیفه',pages:['برد وظایف','اعضای تیم'],feat:['وضعیت وظیفه','تخصیص به اعضا','مهلت و اولویت'],items:[['طراحی صفحه‌ی ورود','در حال انجام'],['نوشتن متن راهنما','در انتظار'],['بازبینی امنیتی','انجام‌شده'],['انتشار نسخه‌ی اول','در انتظار']]},
+ {id:'map',label:'نقشه و مکان',m:['نقشه','مکان','موقعیت','مسیریابی','نزدیک'],aud:'',act:'یافتن مکان',pages:['نقشه و مکان‌ها'],feat:['نمایش موقعیت','مسیریابی تا مقصد']},
+ {id:'notify',label:'اعلان و یادآور',m:['اعلان','یادآور','یادآوری','نوتیفیکیشن','هشدار','پیامک'],aud:'',act:'دریافت اعلان',pages:[],feat:['اعلان‌های هوشمند','تنظیم زمان یادآوری']},
+ {id:'form',label:'فرم و نظرسنجی',m:['فرم','پرسشنامه','نظرسنجی','ثبت درخواست'],aud:'',act:'ثبت فرم',pages:['فرم ثبت'],feat:['اعتبارسنجی فیلدها','ذخیره‌ی پیش‌نویس']},
+ {id:'portfolio',label:'معرفی و نمونه‌کار',m:['رزومه','نمونه کار','نمونه‌کار','پورتفولیو','معرفی'],aud:'مشتریان و کارفرمایان احتمالی',style:'indigo',act:'مشاهده نمونه‌کار',pages:['نمونه‌کارها'],feat:['گالری پروژه‌ها','فرم تماس']}
+];
+TOPICS.forEach(t=>{t.mn=t.m.map(norm)});
+const STOP=new Set(norm('برای این که با را از در به یک هم ها های می شود باشد کند کنند بتواند بتوانند است بود دارد داشته تا یا هر آن او ما شما بر اپ اپلیکیشن برنامه سایت وب وبسایت نرم افزار سامانه سیستم بسازید ساخت طراحی میخواهم لازم نیاز بتوان امکان کاربر کاربران بخش صفحه همراه خودش باید شده شدن کنم کنیم کنید چند مثل مانند حتی بدون بین روی تمام همه خیلی یه آنها خود بعد قبل وقتی همچنین').split(' '));
+
+function extract(text){
+  const t=norm(text), hits=[];
+  TOPICS.forEach(tp=>{let pos=-1;tp.mn.forEach(w=>{const i=t.indexOf(w);if(i>=0&&(pos<0||i<pos))pos=i});if(pos>=0)hits.push({tp,pos})});
+  hits.sort((a,b)=>a.pos-b.pos);
+  const topics=hits.map(h=>h.tp);
+  const covered=topics.flatMap(tp=>tp.mn);
+  const freq={};
+  t.split(/[^؀-ۿa-z0-9]+/).forEach(w=>{
+    if(w.length<3||STOP.has(w)||/^\d+$/.test(w))return;
+    if(covered.some(c=>c.includes(w)||w.includes(c)))return;
+    freq[w]=(freq[w]||0)+1});
+  const extras=Object.entries(freq).sort((a,b)=>b[1]-a[1]||b[0].length-a[0].length).slice(0,4).map(e=>e[0]);
+  return {topics,extras};
+}
+function uniq(a){return [...new Set(a.filter(Boolean))]}
+
+function buildSpec(idea,type,titleIn){
+  idea=clean(idea,800);const {topics,extras}=extract(idea);
+  let title=clean(titleIn,60);
+  if(!title){const first=idea.split(/[.\n،]/)[0].trim();title=first.length>46?first.slice(0,46).replace(/\s+\S*$/,'')+'…':first}
+  let pages=uniq(topics.flatMap(t=>t.pages)).slice(0,4);
+  if(!pages.length)pages=['فهرست و جزئیات','ثبت و ویرایش','حساب کاربری'];
+  pages=['صفحه‌ی اصلی',...pages,'درباره و تماس'];
+  let feat=uniq(topics.flatMap(t=>t.feat)).slice(0,7);
+  if(!feat.length)feat=['جستجو در محتوا','ذخیره‌ی اطلاعات کاربر','اعلان‌های مهم'];
+  feat.push('رابط فارسی راست‌به‌چپ و واکنش‌گرا');
+  const tAud=topics.find(t=>t.aud);let aud=tAud?tAud.aud:'کاربران عمومی فارسی‌زبان که بیشتر با موبایل کار می‌کنند';
+  const m=idea.match(/برای\s+([^،,.\n]{3,48})/);
+  if(m){const part=m[1].split(/\s(?:با|و|که|تا|در|دارای)\s/)[0].trim();if(part.length>2)aud+=' (محور: '+part+')'}
+  const act=(topics.find(t=>t.act)||{act:'انجام کار اصلی'}).act;
+  const ni=norm(idea);let sid=(topics.find(t=>t.style)||{}).style||'indigo';
+  if(/تیره|دارک/.test(ni))sid=sid==='slate'?'slate':'indigo'; else if(/روشن|سفید/.test(ni))sid=STYLES[sid].dark?'shop':sid;
+  const items=(topics.find(t=>t.items)||{}).items||[['مورد نمونه‌ی اول','توضیح کوتاه'],['مورد نمونه‌ی دوم','توضیح کوتاه'],['مورد نمونه‌ی سوم','توضیح کوتاه'],['مورد نمونه‌ی چهارم','توضیح کوتاه']];
+  const tech={
+    android:['اندروید ۸ به بالا، ناوبری پایین‌صفحه با حداکثر پنج تب','رابط راست‌به‌چپ، فونت وزیرمتن و اندازه‌ی لمسی حداقل ۴۸ پیکسل','حالت تیره و روشن، کار آفلاین برای داده‌های ذخیره‌شده'],
+    windows:['ویندوز ۱۰ به بعد، پنجره‌ی قابل تغییر اندازه با نوار کناری','میانبرهای صفحه‌کلید برای کارهای پرتکرار','ذخیره‌ی محلی داده‌ها و بازیابی پس از بستن برنامه'],
+    site:['وب‌سایت واکنش‌گرا با سئوی پایه و زمان بارگذاری زیر سه ثانیه','دسترس‌پذیری: کنتراست مناسب، فوکوس دیدنی، برچسب فرم‌ها','انتشار روی هاست ایستا مانند GitHub Pages'],
+    html:['یک فایل HTML مستقل بدون وابستگی بیرونی، CSS و JS داخل همان فایل','واکنش‌گرا تا عرض ۳۶۰ پیکسل','قابل باز شدن مستقیم از حافظه‌ی دستگاه']
+  }[type];
+  const goal='طراحی و پیاده‌سازی '+TYPES[type].noun+' با عنوان «'+title+'» برای ایده‌ی زیر: '+idea+' کار اصلی کاربر یعنی «'+act+'» باید در کمتر از سه مرحله انجام شود و اولین استفاده بدون راهنما قابل فهم باشد.';
+  return {title,idea,type,keywords:topics.map(t=>({id:t.id,label:t.label})),extras,goal,audience:aud,pages,features:feat,style:Object.assign({},STYLES[sid]),tech,action:act,items};
+}
+function renderPrompt(sp){
+  const L=[];
+  L.push('# پرامپت ساخت: '+sp.title,'نوع خروجی: '+TYPES[sp.type].label,'');
+  L.push('تو طراح و توسعه‌دهنده‌ی ارشد محصول هستی. بر اساس مشخصات زیر، خروجی کامل و قابل اجرا بساز و فقط آنچه خواسته شده را تحویل بده.','');
+  L.push('## هدف',sp.goal,'');
+  L.push('## مخاطب',sp.audience,'');
+  L.push('## صفحات و بخش‌ها',...sp.pages.map((p,i)=>fa(i+1)+'. '+p),'');
+  L.push('## قابلیت‌ها',...sp.features.map(f=>'- '+f),'');
+  L.push('## سبک بصری','سبک: '+sp.style.name+'. رنگ پس‌زمینه '+sp.style.bg+'، رنگ تأکید '+sp.style.accent+'، رنگ تأکید دوم '+sp.style.accent2+'. فونت وزیرمتن، گوشه‌های گرد، سایه‌ی نرم، انیمیشن‌های ظریف و خوانایی بالا.','');
+  L.push('## الزامات فنی',...sp.tech.map(f=>'- '+f),'');
+  L.push('## ایده‌ی اولیه‌ی اپراتور','> '+sp.idea);
+  return L.join('\n');
+}
+function toJSONExport(rec){
+  return JSON.stringify({title:rec.spec.title,type:rec.spec.type,status:rec.status||'draft',keywords:rec.spec.keywords.map(k=>k.label).concat(rec.spec.extras),idea:rec.spec.idea,
+    sections:{goal:rec.spec.goal,audience:rec.spec.audience,pages:rec.spec.pages,features:rec.spec.features,style:{name:rec.spec.style.name,bg:rec.spec.style.bg,accent:rec.spec.style.accent,accent2:rec.spec.style.accent2},tech:rec.spec.tech},
+    prompt:renderPrompt(rec.spec),exportedAt:new Date().toISOString()},null,2);
+}
+/* ---- نمونه‌ها (فقط بار اول) ---- */
+function mkRec(id,idea,type,title,status,author,ago,note){const spec=buildSpec(idea,type,title);return {id,spec,status,author,created:NOW-ago*DAY,updated:NOW-(ago-0.5)*DAY,note:note||''}}
+if(!S.prompts||!S.prompts.length){
+  S.prompts=[
+    mkRec('p-hair','اپلیکیشن رزرو نوبت آنلاین برای آرایشگاه زنانه با پرداخت آنلاین و یادآور پیامکی، سبک شیک و روشن','android','اپ رزرو نوبت آرایشگاه','approved','u-reza',6),
+    mkRec('p-shop','فروشگاه آنلاین صنایع دستی با سبد خرید، کد تخفیف و ویترین محصولات برای خریداران ایرانی','site','فروشگاه صنایع دستی','pending','u-reza',2),
+    mkRec('p-dash','برنامه‌ی دسکتاپ داشبورد گزارش فروش با نمودار و خروجی اکسل برای تیم فروش و مدیران','windows','داشبورد گزارش فروش','rejected','u-sara',9,'دامنه‌ی کار بزرگ است؛ ابتدا فقط گزارش ماهانه را تعریف کنید.')
+  ];savePrompts();
+}
+window.PS.engine={TYPES,STYLES,TOPICS,extract,buildSpec,renderPrompt,toJSONExport};
+
+/* ---- رابط ابزار ---- */
+const fIdea=$('#fIdea'),fTitle=$('#fTitle'),kwBox=$('#kwBox'),cnt=$('#cnt'),genErr=$('#genErr'),resultBox=$('#resultBox');
+const curType=()=>($('input[name=otype]:checked')||{value:'android'}).value;
+function drawKw(){
+  const {topics,extras}=extract(fIdea.value);cnt.textContent=fa(fIdea.value.length)+'/'+fa(800);
+  kwBox.innerHTML=(topics.length||extras.length)?topics.map(t=>'<span class="chip k">'+esc(t.label)+'</span>').join('')+extras.map(w=>'<span class="chip w">'+esc(w)+'</span>').join(''):'<span class="hint">با نوشتن ایده، کلمات کلیدی اینجا ظاهر می‌شوند.</span>';
+}
+let tm;fIdea.addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(drawKw,120);cnt.textContent=fa(fIdea.value.length)+'/'+fa(800)});
+
+function offerFile(name,content){
+  return saveFile(name,content).then(r=>{
+    if(r&&r.fallback){
+      const ov=openSheet('کپی دستی فایل','<p class="hint" style="margin-bottom:10px">ذخیره‌ی مستقیم فایل در این نما فعال نیست. متن را کپی و در فایلی با نام <span class="mono">'+esc(name)+'</span> ذخیره کنید.</p><textarea class="inp mono" id="fbTa" readonly style="min-height:260px"></textarea><div class="row" style="margin-top:10px"><button class="btn primary" type="button" id="fbCopy">کپی متن</button></div>');
+      const ta=$('#fbTa',ov);ta.value=content;$('#fbCopy',ov).onclick=()=>copyText(content,'متن کپی شد');}
+  });
+}
+const slug=r=>'promptsaz-'+r.spec.type+'-'+String(r.id).slice(-5);
+window.PS.offerFile=offerFile;window.PS.slug=slug;
+
+function drawResult(){
+  const d=S.draft;
+  if(!d){resultBox.innerHTML='<div class="empty"><b>هنوز پرامپتی ساخته نشده</b>ایده را بنویسید و «تولید پرامپت» را بزنید.</div>';return}
+  const text=renderPrompt(d.spec);
+  resultBox.innerHTML='<div class="card raised result"><div class="row" style="justify-content:space-between"><h3 style="font-size:17px">'+esc(d.spec.title)+'</h3><span class="chip">'+esc(TYPES[d.spec.type].label)+'</span></div>'
+   +'<div class="chips">'+d.spec.keywords.map(k=>'<span class="chip k">'+esc(k.label)+'</span>').join('')+d.spec.extras.map(w=>'<span class="chip w">'+esc(w)+'</span>').join('')+'</div>'
+   +'<div class="promptbox" tabindex="0">'+esc(text)+'</div>'
+   +'<div class="row"><button class="btn primary" type="button" id="rSend"'+(d.sent?' disabled':'')+'><svg><use href="#i-send"/></svg>'+(d.sent?'در صف تأیید است':'ارسال به صف تأیید')+'</button>'
+   +'<button class="btn" type="button" id="rCopy"><svg><use href="#i-copy"/></svg>کپی</button>'
+   +'<button class="btn" type="button" id="rTxt"><svg><use href="#i-dl"/></svg>TXT</button>'
+   +'<button class="btn" type="button" id="rJson"><svg><use href="#i-dl"/></svg>JSON</button></div>'
+   +'<p class="hint">پرامپت پس از ارسال در صف تأیید دیده می‌شود و بعد از تأیید می‌توانید خروجی را بسازید.</p></div>';
+  $('#rCopy').onclick=()=>copyText(text,'پرامپت کپی شد');
+  $('#rTxt').onclick=()=>offerFile(slug(d)+'.txt',text);
+  $('#rJson').onclick=()=>offerFile(slug(d)+'.json',toJSONExport(d));
+  const sb=$('#rSend');if(sb)sb.onclick=()=>{
+    const u=me();
+    if(!u){toast('برای ارسال به صف، ابتدا وارد حساب شوید','bad');location.hash='account';return}
+    if(PS.gate&&!PS.gate('ارسال به صف تأیید'))return;
+    S.prompts.unshift({id:d.id,spec:d.spec,status:'pending',author:u.id,created:Date.now(),updated:Date.now(),note:''});
+    savePrompts();d.sent=true;drawResult();PS.drawQueue&&PS.drawQueue();toast('به صف تأیید اضافه شد','ok');
+  };
+}
+$('#genForm').addEventListener('submit',e=>{
+  e.preventDefault();const idea=clean(fIdea.value,800);
+  if(idea.length<12){genErr.textContent='ایده خیلی کوتاه است؛ دست‌کم یک جمله بنویسید.';fIdea.focus();return}
+  genErr.textContent='';
+  S.draft={id:uid(),spec:buildSpec(idea,curType(),fTitle.value),sent:false};
+  drawResult();toast('پرامپت ساخته شد','ok');
+  if(innerWidth<960)resultBox.scrollIntoView({behavior:'smooth',block:'start'});
+});
+fIdea.value='اپلیکیشن رزرو نوبت آنلاین برای آرایشگاه زنانه با پرداخت آنلاین و یادآور پیامکی';
+drawKw();
+S.draft={id:uid(),spec:buildSpec(fIdea.value,'android',''),sent:false};drawResult();
+})();
+/* ===== صف تأیید ===== */
+(function(){
+'use strict';
+const {$,$$,clean,esc,fa,toast,copyText,openSheet,closeSheet,S,savePrompts,me,isAdmin,userById,fmtDate,offerFile,slug}=PS;
+const E=PS.engine;
+const ST={pending:'در انتظار',approved:'تأییدشده',rejected:'ردشده'};
+let filter='all';
+
+const can={
+  edit:r=>{const u=me();return !!u&&(u.role==='admin'||r.author===u.id)},
+  approve:r=>{const u=me();return !!u&&r.status!=='approved'&&(u.role==='admin'||r.author===u.id)},
+  reject:r=>isAdmin()&&r.status!=='rejected',
+  build:r=>!!me()&&r.status==='approved'&&(isAdmin()||r.author===me().id),
+  del:r=>{const u=me();return !!u&&(u.role==='admin'||r.author===u.id)}
+};
+function roleText(){
+  const u=me();
+  if(!u)return 'برای تأیید، رد یا ویرایش پرامپت‌ها وارد حساب شوید. تا آن موقع فقط می‌توانید صف را ببینید.';
+  if(u.role!=='admin'&&!PS.subState(u).active)return 'اشتراک شما تمام شده است. می‌توانید پرامپت‌ها را ببینید و خروجی TXT یا JSON بگیرید، اما تأیید و ساخت خروجی نیاز به اشتراک فعال دارد.';
+  if(u.role==='admin')return 'شما ادمین هستید: همه‌ی پرامپت‌ها را تأیید، رد، ویرایش یا حذف می‌کنید. ردکردن همیشه با ثبت دلیل است.';
+  return 'شما اپراتور هستید: پرامپت‌های خودتان را ویرایش و تأیید می‌کنید و بعد از تأیید خروجی می‌سازید. ردکردن با ادمین است.';
+}
+function card(r,i){
+  const au=userById(r.author),sp=r.spec,acts=[];
+  if(can.build(r))acts.push('<button class="btn primary sm" data-act="build" data-id="'+r.id+'"><svg><use href="#i-play"/></svg>ساخت خروجی</button>');
+  if(can.approve(r))acts.push('<button class="btn teal sm" data-act="approve" data-id="'+r.id+'">تأیید</button>');
+  if(can.reject(r))acts.push('<button class="btn danger sm" data-act="reject" data-id="'+r.id+'">رد</button>');
+  if(isAdmin()&&r.status==='rejected')acts.push('<button class="btn sm" data-act="reopen" data-id="'+r.id+'">بازگشت به انتظار</button>');
+  if(can.edit(r))acts.push('<button class="btn sm" data-act="edit" data-id="'+r.id+'">ویرایش</button>');
+  if(can.del(r))acts.push('<button class="btn sm danger" data-act="del" data-id="'+r.id+'">حذف</button>');
+  return '<article class="q" style="animation-delay:'+(i*60)+'ms"><div class="q-top"><div><h3>'+esc(sp.title)+'</h3><div class="q-meta"><span>'+esc(E.TYPES[sp.type].label)+'</span><span>سازنده: '+esc(au?au.name:'کاربر حذف‌شده')+'</span><span>'+esc(fmtDate(r.updated))+'</span></div></div><span class="pill '+r.status+'">'+ST[r.status]+'</span></div>'
+   +'<div class="chips">'+sp.keywords.map(k=>'<span class="chip k">'+esc(k.label)+'</span>').join('')+'</div>'
+   +(r.status==='rejected'&&r.note?'<div class="q-note">دلیل رد: '+esc(r.note)+'</div>':'')
+   +'<details><summary>مشاهده‌ی پرامپت</summary><div class="promptbox">'+esc(E.renderPrompt(sp))+'</div><div class="row" style="margin-top:10px"><button class="btn sm" data-act="copy" data-id="'+r.id+'"><svg><use href="#i-copy"/></svg>کپی</button><button class="btn sm" data-act="txt" data-id="'+r.id+'"><svg><use href="#i-dl"/></svg>TXT</button><button class="btn sm" data-act="json" data-id="'+r.id+'"><svg><use href="#i-dl"/></svg>JSON</button></div></details>'
+   +(acts.length?'<div class="q-actions">'+acts.join('')+'</div>':'')+'</article>';
+}
+function draw(){
+  $('#qRole').textContent=roleText();
+  const c={all:S.prompts.length,pending:0,approved:0,rejected:0};S.prompts.forEach(r=>c[r.status]++);
+  const names={all:'همه',pending:'در انتظار',approved:'تأییدشده',rejected:'ردشده'};
+  $('#qTabs').innerHTML=Object.keys(names).map(k=>'<button class="tab'+(filter===k?' on':'')+'" type="button" role="tab" aria-selected="'+(filter===k)+'" data-f="'+k+'">'+names[k]+'<b>'+fa(c[k])+'</b></button>').join('');
+  const list=S.prompts.filter(r=>filter==='all'||r.status===filter);
+  $('#qList').innerHTML=list.length?list.map(card).join(''):'<div class="empty"><b>این بخش خالی است</b>پرامپتی با این وضعیت وجود ندارد. از بخش «ساخت پرامپت» یکی بفرستید.</div>';
+}
+PS.drawQueue=draw;
+const find=id=>S.prompts.find(r=>r.id===id);
+function setStatus(r,st,note){r.status=st;r.updated=Date.now();r.note=note||'';savePrompts();draw()}
+
+function rejectSheet(r){
+  const ov=openSheet('دلیل رد پرامپت','<div class="field"><label for="rjNote">دلیل (برای اپراتور نمایش داده می‌شود)</label><textarea class="inp" id="rjNote" maxlength="200" style="min-height:90px" placeholder="مثلاً: دامنه‌ی کار بزرگ است"></textarea></div><div class="err" id="rjErr"></div><div class="row"><button class="btn danger" id="rjOk" type="button">ثبت رد</button><button class="btn" data-close type="button">انصراف</button></div>');
+  $('#rjOk',ov).onclick=()=>{const n=clean($('#rjNote',ov).value,200);if(n.length<3){$('#rjErr',ov).textContent='دلیل را دست‌کم در چند کلمه بنویسید.';return}
+    setStatus(r,'rejected',n);closeSheet();toast('پرامپت رد شد')};
+}
+function lines(v,max){return clean(v,2000).split('\n').map(s=>clean(s,90)).filter(Boolean).slice(0,max)}
+function editSheet(r){
+  const sp=r.spec;
+  const ov=openSheet('ویرایش پرامپت','<div class="editgrid">'
+   +'<div class="field"><label for="eT">عنوان</label><input class="inp" id="eT" maxlength="60"></div>'
+   +'<div class="grid2"><div class="field"><label for="eTy">نوع خروجی</label><select class="inp" id="eTy">'+Object.keys(E.TYPES).map(k=>'<option value="'+k+'">'+E.TYPES[k].label+'</option>').join('')+'</select></div>'
+   +'<div class="field"><label for="eSt">سبک بصری</label><select class="inp" id="eSt">'+Object.keys(E.STYLES).map(k=>'<option value="'+k+'">'+E.STYLES[k].name+'</option>').join('')+'</select></div></div>'
+   +'<div class="field"><label for="eG">هدف</label><textarea class="inp" id="eG" maxlength="900" style="min-height:96px"></textarea></div>'
+   +'<div class="field"><label for="eA">مخاطب</label><input class="inp" id="eA" maxlength="200"></div>'
+   +'<div class="grid2"><div class="field"><label for="eP">صفحات (هر خط یکی، حداکثر ۷)</label><textarea class="inp" id="eP" style="min-height:150px"></textarea></div>'
+   +'<div class="field"><label for="eF">قابلیت‌ها (هر خط یکی، حداکثر ۹)</label><textarea class="inp" id="eF" style="min-height:150px"></textarea></div></div></div>'
+   +'<div class="err" id="eErr"></div><p class="hint" id="eHint" style="margin-bottom:10px"></p><div class="row"><button class="btn primary" id="eOk" type="button">ذخیره</button><button class="btn" data-close type="button">انصراف</button></div>');
+  $('#eT',ov).value=sp.title;$('#eTy',ov).value=sp.type;$('#eSt',ov).value=sp.style.id||'indigo';$('#eG',ov).value=sp.goal;$('#eA',ov).value=sp.audience;
+  $('#eP',ov).value=sp.pages.join('\n');$('#eF',ov).value=sp.features.join('\n');
+  if(r.status==='approved')$('#eHint',ov).textContent='این پرامپت تأییدشده است؛ بعد از ذخیره دوباره در انتظار تأیید قرار می‌گیرد.';
+  $('#eOk',ov).onclick=()=>{
+    const t=clean($('#eT',ov).value,60),g=clean($('#eG',ov).value,900),a=clean($('#eA',ov).value,200),p=lines($('#eP',ov).value,7),f=lines($('#eF',ov).value,9);
+    if(t.length<2||g.length<10||!p.length||!f.length){$('#eErr',ov).textContent='عنوان، هدف، دست‌کم یک صفحه و یک قابلیت لازم است.';return}
+    const type=$('#eTy',ov).value;
+    Object.assign(sp,{title:t,goal:g,audience:a||sp.audience,pages:p,features:f,type,style:Object.assign({},E.STYLES[$('#eSt',ov).value])});
+    const was=r.status;r.status='pending';r.note='';r.updated=Date.now();savePrompts();draw();closeSheet();
+    toast(was==='approved'?'ذخیره شد؛ برای ساخت خروجی دوباره تأیید کنید':'ویرایش ذخیره شد','ok');
+  };
+}
+$('#qTabs').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(b){filter=b.dataset.f;draw()}});
+let delArm=null;
+$('#qList').addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const r=find(b.dataset.id);if(!r)return;const act=b.dataset.act;
+  if(act==='copy')return copyText(E.renderPrompt(r.spec),'پرامپت کپی شد');
+  if(act==='txt')return offerFile(slug(r)+'.txt',E.renderPrompt(r.spec));
+  if(act==='json')return offerFile(slug(r)+'.json',E.toJSONExport(r));
+  if(!me()){toast('برای این کار وارد حساب شوید','bad');location.hash='account';return}
+  if((act==='approve'||act==='build')&&PS.gate&&!PS.gate(act==='build'?'ساخت خروجی':'تأیید پرامپت'))return;
+  if(act==='approve'&&can.approve(r)){setStatus(r,'approved');toast('پرامپت تأیید شد؛ دکمه‌ی «ساخت خروجی» فعال شد','ok')}
+  else if(act==='reject'&&can.reject(r))rejectSheet(r);
+  else if(act==='reopen'&&isAdmin()){setStatus(r,'pending');toast('به انتظار برگشت')}
+  else if(act==='edit'&&can.edit(r))editSheet(r);
+  else if(act==='build'&&can.build(r))PS.openBuilder(r);
+  else if(act==='del'&&can.del(r)){
+    if(delArm===r.id){S.prompts=S.prompts.filter(x=>x.id!==r.id);savePrompts();draw();toast('حذف شد');delArm=null}
+    else{delArm=r.id;b.textContent='حذف قطعی؟';setTimeout(()=>{if(delArm===r.id){delArm=null;draw()}},3500)}
+  }
+});
+draw();
+})();
+/* ===== زمان‌اجرای برنامه‌ی تولیدشده (به‌صورت متن در خروجی جاسازی می‌شود؛ مستقل و بدون وابستگی) ===== */
+PS.appRuntime=function(SPEC){
+  var root=document.getElementById('root');
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function fa(n){return String(n).replace(/\d/g,function(d){return '۰۱۲۳۴۵۶۷۸۹'[d]})}
+  var KEY='ps-app:'+SPEC.title,ST={cart:[],book:[],taken:{},msgs:[],subs:[],profile:{name:'',phone:''}};
+  try{var sv=JSON.parse(localStorage.getItem(KEY)||'null');if(sv)for(var k in sv)ST[k]=sv[k]}catch(e){}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(ST))}catch(e){}}
+  function toast(m){var t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(function(){t.remove()},2200)}
+  function short(s){return s.length>150?s.slice(0,150).replace(/\s+\S*$/,'')+'…':s}
+  function kind(label){var l=label.replace(/‌/g,' ');
+    if(/سبد|تسویه|پرداخت|فاکتور/.test(l))return 'cart';
+    if(/زمان|نوبت|رزرو|تقویم/.test(l))return 'book';
+    if(/داشبورد|گزارش|آمار/.test(l))return 'dash';
+    if(/ورود|پروفایل|حساب|ثبت.?نام|پرونده/.test(l))return 'acc';
+    if(/گفتگو|پشتیبانی|پیام|تیکت/.test(l))return 'chat';
+    if(/فرم|ثبت|ویرایش/.test(l))return 'form';
+    if(/درباره|تماس/.test(l))return 'about';
+    if(/اصلی|خانه/.test(l))return 'home';
+    return 'list'}
+  var P=SPEC.pages,IT=SPEC.items,sel={day:0,time:null},dashRange=7,filterQ='';
+  var firstAct=0;for(var i=0;i<P.length;i++){var kk=kind(P[i]);if(kk!=='home'&&kk!=='about'){firstAct=i;break}}
+  function itemOptions(id){return '<select class="inp" id="'+id+'">'+IT.map(function(x,i){return '<option value="'+i+'">'+esc(x[0])+'</option>'}).join('')+'</select>'}
+  var R={
+    home:function(){return '<div class="hero"><h1>'+esc(SPEC.title)+'</h1><p>'+esc(short(SPEC.idea))+'</p><button class="btn" data-a="go" data-i="'+firstAct+'">'+esc(SPEC.action)+'</button></div><h3 class="h">قابلیت‌ها</h3><div class="grid">'+SPEC.features.map(function(f){return '<div class="card"><b>'+esc(f)+'</b></div>'}).join('')+'</div>'},
+    list:function(){var q=filterQ;var rows=IT.map(function(x,i){return [x,i]}).filter(function(p){return !q||p[0][0].indexOf(q)>-1});
+      return '<input class="inp" id="srch" placeholder="جستجو..." value="'+esc(q)+'" aria-label="جستجو"><div class="grid" style="margin-top:12px">'+(rows.length?rows.map(function(p){return '<div class="card"><b>'+esc(p[0][0])+'</b><span class="mu">'+esc(p[0][1])+'</span><button class="btn sm" data-a="pick" data-i="'+p[1]+'">'+(kind(SPEC.action)==='x'?'':'انتخاب')+'</button></div>'}).join(''):'<div class="card mu">موردی پیدا نشد.</div>')+'</div>'},
+    cart:function(){if(!ST.cart.length)return '<div class="card mu">هنوز موردی انتخاب نشده است. از بخش فهرست، موردی را انتخاب کنید.</div>';
+      return '<div class="grid">'+ST.cart.map(function(ix,n){var x=IT[ix]||['—',''];return '<div class="card"><b>'+esc(x[0])+'</b><span class="mu">'+esc(x[1])+'</span><button class="btn sm ghost" data-a="rm" data-i="'+n+'">حذف</button></div>'}).join('')+'</div><p class="mu" style="margin-block:12px">تعداد انتخاب‌ها: '+fa(ST.cart.length)+'</p><button class="btn" data-a="checkout">ثبت نهایی</button>'},
+    book:function(){var days='',times='',T=['۰۹:۰۰','۱۰:۳۰','۱۲:۰۰','۱۴:۳۰','۱۶:۰۰','۱۷:۳۰'];
+      for(var d=0;d<5;d++){var dt=new Date(Date.now()+d*864e5),lb;try{lb=dt.toLocaleDateString('fa-IR',{weekday:'short',day:'numeric',month:'short'})}catch(e){lb=fa(dt.getDate())}
+        days+='<button class="chip'+(sel.day===d?' on':'')+'" data-a="day" data-i="'+d+'">'+esc(lb)+'</button>'}
+      T.forEach(function(t,j){var key=sel.day+'-'+j,off=ST.taken[key]||((sel.day*3+j)%5===0);times+='<button class="chip'+(sel.time===j?' on':'')+'" data-a="time" data-i="'+j+'"'+(off?' disabled':'')+'>'+t+'</button>'});
+      var mine=ST.book.length?'<h3 class="h">رزروهای من</h3><div class="grid">'+ST.book.map(function(b,n){return '<div class="card"><b>'+esc(b.it)+'</b><span class="mu">'+esc(b.d)+'، '+b.t+'</span><button class="btn sm ghost" data-a="unbook" data-i="'+n+'">لغو</button></div>'}).join('')+'</div>':'';
+      return '<label class="lb" for="bsel">انتخاب مورد</label>'+itemOptions('bsel')+'<h3 class="h">روز</h3><div class="chips">'+days+'</div><h3 class="h">ساعت</h3><div class="chips">'+times+'</div><p class="mu" style="margin-block:10px">ساعت‌های خاکستری قبلاً پر شده‌اند و دوباره رزرو نمی‌شوند.</p><button class="btn" data-a="book">'+esc(SPEC.action)+'</button>'+mine},
+    dash:function(){var s=SPEC.title.length+dashRange,L=SPEC.keywords.map(function(k){return k.label}).concat(['فعالیت امروز','موارد باز','نرخ تکمیل']).slice(0,3);
+      function v(n){return (s*37*(n+2)+n*91)%900+80}
+      var bars=[],mx=0;for(var i=0;i<7;i++){var h=(s*(i+3)*53)%70+25;bars.push(h);if(h>mx)mx=h}
+      var svg='<svg viewBox="0 0 280 120" width="100%" role="img" aria-label="نمودار هفتگی">'+bars.map(function(h,i){var hh=h/mx*90;return '<rect x="'+(8+i*39)+'" y="'+(100-hh)+'" width="26" height="'+hh+'" rx="6" fill="var(--ac)" opacity="'+(i===6?1:.55)+'"/><text x="'+(21+i*39)+'" y="115" font-size="9" text-anchor="middle" fill="var(--mu)">'+fa(7-i)+'</text>'}).join('')+'</svg>';
+      return '<div class="chips" style="margin-bottom:12px"><button class="chip'+(dashRange===7?' on':'')+'" data-a="rng" data-i="7">۷ روز</button><button class="chip'+(dashRange===30?' on':'')+'" data-a="rng" data-i="30">۳۰ روز</button></div><div class="grid">'+L.map(function(l,n){return '<div class="card"><span class="mu">'+esc(l)+'</span><b class="big">'+fa(v(n))+'</b></div>'}).join('')+'</div><h3 class="h">روند '+fa(dashRange)+' روز اخیر</h3><div class="card">'+svg+'</div><p class="mu" style="margin-top:8px">اعداد نمایشی‌اند و با داده‌ی واقعی جایگزین می‌شوند.</p>'},
+    acc:function(){var p=ST.profile;return (p.name?'<div class="card" style="margin-bottom:12px"><b>سلام '+esc(p.name)+'</b><span class="mu">اطلاعات شما ذخیره شده است.</span></div>':'')+'<label class="lb" for="an">نام</label><input class="inp" id="an" maxlength="40" value="'+esc(p.name)+'"><label class="lb" for="ap">شماره‌ی موبایل</label><input class="inp" id="ap" inputmode="numeric" maxlength="11" placeholder="09123456789" value="'+esc(p.phone)+'" dir="ltr"><div class="er" id="aer"></div><button class="btn" data-a="saveacc">ذخیره</button>'},
+    chat:function(){if(!ST.msgs.length)ST.msgs=[{m:0,t:'سلام! چطور می‌توانیم کمکتان کنیم؟'}];
+      return '<div class="chat" id="chat">'+ST.msgs.map(function(m){return '<div class="msg '+(m.m?'me':'')+'">'+esc(m.t)+'</div>'}).join('')+'</div><div class="row"><input class="inp" id="cin" maxlength="200" placeholder="پیام خود را بنویسید" aria-label="پیام"><button class="btn" data-a="send">ارسال</button></div>'},
+    form:function(){return '<label class="lb" for="fi">مورد</label>'+itemOptions('fi')+'<label class="lb" for="fn">نام</label><input class="inp" id="fn" maxlength="40"><label class="lb" for="fd">توضیح</label><textarea class="inp" id="fd" maxlength="300" style="min-height:90px"></textarea><div class="er" id="fer"></div><button class="btn" data-a="sub">'+esc(SPEC.action)+'</button>'+(ST.subs.length?'<h3 class="h">ثبت‌های اخیر</h3><div class="grid">'+ST.subs.slice(-4).map(function(s){return '<div class="card"><b>'+esc(s.i)+'</b><span class="mu">'+esc(s.n)+'</span></div>'}).join('')+'</div>':'')},
+    about:function(){return '<div class="card"><b>هدف</b><span class="mu">'+esc(SPEC.goal)+'</span></div><div class="card" style="margin-top:12px"><b>مخاطب</b><span class="mu">'+esc(SPEC.audience)+'</span></div><h3 class="h">قابلیت‌ها</h3><ul class="ul">'+SPEC.features.map(function(f){return '<li>'+esc(f)+'</li>'}).join('')+'</ul>'}
+  };
+  function body(i){return R[kind(P[i])]()}
+  function sec(i){return '<section class="pg" id="pg'+i+'"><h2>'+esc(P[i])+'</h2><div id="pb'+i+'">'+body(i)+'</div></section>'}
+  var cur=0,T=SPEC.type;
+  function badge(){var b=document.getElementById('bd');if(b){b.textContent=fa(ST.cart.length);b.hidden=!ST.cart.length}}
+  function rerender(i){var el=document.getElementById('pb'+i);if(el)el.innerHTML=body(i);badge();save()}
+  function show(i){cur=i;var m=document.getElementById('main');m.innerHTML=sec(i);m.scrollTop=0;window.scrollTo(0,0);
+    var ns=document.querySelectorAll('[data-a=nav]');for(var n=0;n<ns.length;n++)ns[n].classList.toggle('on',+ns[n].getAttribute('data-i')===i);badge()}
+  var nav=P.map(function(p,i){return '<button class="nv'+(i===0?' on':'')+'" data-a="nav" data-i="'+i+'">'+esc(p)+'</button>'}).join('');
+  var navL=P.map(function(p,i){return '<a href="#pg'+i+'" data-a="anc" data-i="'+i+'">'+esc(p)+'</a>'}).join('');
+  if(T==='android'){root.innerHTML='<div class="app"><header class="bar"><b>'+esc(SPEC.title)+'</b><span class="badge" id="bd" hidden>0</span></header><main id="main"></main><nav class="tabs">'+nav+'</nav></div>';show(0)}
+  else if(T==='windows'){root.innerHTML='<div class="wn"><div class="tb"><span>'+esc(SPEC.title)+'</span><span class="badge" id="bd" hidden>0</span></div><div class="wb"><aside>'+nav+'</aside><main id="main"></main></div></div>';show(0)}
+  else{var all='';for(var j=0;j<P.length;j++)all+=sec(j);root.innerHTML='<header class="top"><b>'+esc(SPEC.title)+'</b><nav>'+navL+'</nav><span class="badge" id="bd" hidden>0</span></header><main id="main" class="site">'+all+'</main><footer class="ft">'+esc(SPEC.title)+' · ساخته‌شده با پرامپت‌ساز</footer>';badge()}
+  function inp(id){var e=document.getElementById(id);return e?e.value.trim().slice(0,300):''}
+  root.addEventListener('input',function(e){if(e.target.id==='srch'){filterQ=e.target.value.trim();var pos=e.target.selectionStart;var sc=e.target.closest('.pg');rerender(sc?+sc.id.slice(2):cur);var s=document.getElementById('srch');if(s){s.focus();try{s.setSelectionRange(pos,pos)}catch(x){}}}});
+  root.addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b)return;var a=b.getAttribute('data-a'),i=+b.getAttribute('data-i'),pg=T==='android'||T==='windows'?cur:+((b.closest('.pg')||{id:'pg0'}).id.slice(2));
+    if(a==='nav'||a==='go'){if(T==='android'||T==='windows')show(i);else document.getElementById('pg'+i).scrollIntoView({behavior:'smooth'})}
+    else if(a==='anc'){e.preventDefault();document.getElementById('pg'+i).scrollIntoView({behavior:'smooth'})}
+    else if(a==='pick'){ST.cart.push(i);toast('«'+IT[i][0]+'» انتخاب شد');save();badge();var cp=-1;P.forEach(function(p,n){if(kind(p)==='cart')cp=n;});if(cp>-1&&document.getElementById('pb'+cp))rerender(cp)}
+    else if(a==='rm'){ST.cart.splice(i,1);rerender(pg)}
+    else if(a==='checkout'){ST.cart=[];toast('ثبت شد. ممنون از شما!');rerender(pg)}
+    else if(a==='day'){sel.day=i;sel.time=null;rerender(pg)}
+    else if(a==='time'){sel.time=i;rerender(pg);}
+    else if(a==='book'){if(sel.time==null){toast('ابتدا ساعت را انتخاب کنید');return}var T2=['۰۹:۰۰','۱۰:۳۰','۱۲:۰۰','۱۴:۳۰','۱۶:۰۰','۱۷:۳۰'],ix=+(document.getElementById('bsel')||{value:0}).value,dl=((b.closest('.pg')||document).querySelector('.chip.on')||{textContent:''}).textContent;
+      ST.book.push({it:IT[ix][0],d:dl,t:T2[sel.time],k:sel.day+'-'+sel.time});ST.taken[sel.day+'-'+sel.time]=true;sel.time=null;toast('رزرو شما ثبت شد');rerender(pg)}
+    else if(a==='unbook'){var bk=ST.book.splice(i,1)[0];if(bk)delete ST.taken[bk.k];toast('رزرو لغو شد');rerender(pg)}
+    else if(a==='rng'){dashRange=i;rerender(pg)}
+    else if(a==='saveacc'){var n=inp('an'),ph=inp('ap');var er=document.getElementById('aer');if(n.length<2){er.textContent='نام را وارد کنید.';return}if(ph&&!/^09\d{9}$/.test(ph)){er.textContent='شماره‌ی موبایل معتبر نیست.';return}ST.profile={name:n,phone:ph};toast('ذخیره شد');rerender(pg)}
+    else if(a==='send'){var t=inp('cin');if(!t)return;ST.msgs.push({m:1,t:t});rerender(pg);setTimeout(function(){ST.msgs.push({m:0,t:'پیام شما ثبت شد؛ همکاران ما به‌زودی پاسخ می‌دهند.'});rerender(pg);var c=document.getElementById('chat');if(c)c.scrollTop=c.scrollHeight},650)}
+    else if(a==='sub'){var nm=inp('fn'),er2=document.getElementById('fer');if(nm.length<2){er2.textContent='نام را وارد کنید.';return}var ii=document.getElementById('fi');ST.subs.push({i:IT[+ii.value][0],n:nm});toast('درخواست ثبت شد');rerender(pg)}
+  });
+};
+/* ===== سازنده‌ی خروجی: از پرامپت تأییدشده تا برنامه‌ی قابل دانلود ===== */
+(function(){
+'use strict';
+const {$,$$,esc,fa,toast,copyText,openSheet,saveFile,offerFile,slug}=PS;
+const E=PS.engine;
+
+function lum(hex){const n=parseInt(hex.slice(1),16),c=[n>>16&255,n>>8&255,n&255].map(v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*c[0]+.7152*c[1]+.0722*c[2]}
+function appCSS(p){
+  const onA=lum(p.accent)>.4?'#0a0c1a':'#ffffff', line=p.dark?'rgba(255,255,255,.12)':'rgba(20,20,60,.12)';
+  return ':root{--bg:'+p.bg+';--sf:'+p.surface+';--fg:'+p.fg+';--mu:'+p.muted+';--ac:'+p.accent+';--ac2:'+p.accent2+';--on:'+onA+';--ln:'+line+';color-scheme:'+(p.dark?'dark':'light')+'}'
+  +'*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.8 Vazirmatn,Tahoma,"Segoe UI",system-ui,sans-serif}'
+  +'h1,h2,h3{margin:0;line-height:1.4}h2{font-size:20px;margin-bottom:14px}.h{font-size:15px;margin:18px 0 10px}.mu{color:var(--mu);font-size:13px}'
+  +'.btn{border:0;border-radius:14px;background:var(--ac);color:var(--on);padding:10px 20px;font:inherit;font-weight:700;cursor:pointer;min-height:44px}.btn.sm{min-height:36px;padding:4px 14px;font-size:13px}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--ln)}.btn:active{transform:scale(.97)}'
+  +'.inp{width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--ln);background:var(--sf);color:var(--fg);font:inherit;min-height:44px;margin-bottom:10px}.lb{display:block;font-size:13px;font-weight:700;color:var(--mu);margin:6px 0 4px}'
+  +'.er{color:#ff7b92;font-size:13px;min-height:20px}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}'
+  +'.card{background:var(--sf);border:1px solid var(--ln);border-radius:18px;padding:16px;display:grid;gap:6px;align-content:start;box-shadow:0 8px 24px rgba(0,0,0,.08)}.big{font-size:26px}'
+  +'.hero{background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 30%,var(--sf)),var(--sf));border:1px solid var(--ln);border-radius:24px;padding:26px 20px;display:grid;gap:12px;justify-items:start}.hero h1{font-size:26px}.hero p{color:var(--mu);margin:0}'
+  +'.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{border:1px solid var(--ln);background:var(--sf);color:var(--fg);border-radius:999px;padding:4px 14px;font:inherit;font-size:13px;cursor:pointer}.chip.on{background:var(--ac);color:var(--on);border-color:transparent;font-weight:700}.chip[disabled]{opacity:.35;cursor:not-allowed;text-decoration:line-through}'
+  +'.ul{margin:0;padding-inline-start:20px;display:grid;gap:4px}.chat{display:grid;gap:8px;max-height:46vh;overflow:auto;margin-bottom:10px}.msg{max-width:80%;padding:8px 14px;border-radius:16px;background:var(--sf);border:1px solid var(--ln)}.msg.me{justify-self:end;background:var(--ac);color:var(--on)}.row{display:flex;gap:8px}.row .inp{margin:0}'
+  +'.badge{background:var(--ac2);color:var(--on);border-radius:999px;min-width:22px;padding:0 7px;text-align:center;font-size:12px;font-weight:700}.pg{padding-block:6px 10px}'
+  +'.toast{position:fixed;inset-inline:16px;bottom:84px;margin-inline:auto;width:max-content;max-width:90%;background:var(--fg);color:var(--bg);padding:8px 18px;border-radius:14px;z-index:99;font-size:14px}'
+  +'.app{max-width:520px;margin-inline:auto;min-height:100vh;display:flex;flex-direction:column}.bar{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--bg);border-bottom:1px solid var(--ln);font-size:17px}'
+  +'.app main{flex:1;padding:16px 16px 90px}.tabs{position:fixed;bottom:0;inset-inline:0;max-width:520px;margin-inline:auto;display:flex;gap:2px;overflow-x:auto;background:var(--sf);border-top:1px solid var(--ln);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}'
+  +'.tabs .nv{flex:1 0 auto;min-width:76px;border:0;background:none;color:var(--mu);font:inherit;font-size:12px;padding:8px 6px;border-radius:12px;cursor:pointer}.tabs .nv.on{background:color-mix(in srgb,var(--ac) 22%,transparent);color:var(--fg);font-weight:700}'
+  +'.wn{min-height:100vh;display:flex;flex-direction:column}.tb{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:var(--sf);border-bottom:1px solid var(--ln);font-size:13px}.wb{flex:1;display:grid;grid-template-columns:230px minmax(0,1fr)}'
+  +'.wb aside{background:var(--sf);border-inline-end:1px solid var(--ln);padding:12px;display:grid;gap:4px;align-content:start}.wb .nv{text-align:start;border:0;background:none;color:var(--mu);font:inherit;padding:10px 14px;border-radius:12px;cursor:pointer}.wb .nv.on{background:color-mix(in srgb,var(--ac) 22%,transparent);color:var(--fg);font-weight:700}.wb main{padding:24px;max-width:860px}'
+  +'@media(max-width:640px){.wb{grid-template-columns:1fr}.wb aside{grid-auto-flow:column;overflow-x:auto;border:0;border-bottom:1px solid var(--ln)}}'
+  +'.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:16px;padding:12px 20px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--ln);flex-wrap:wrap}.top nav{display:flex;gap:4px;overflow-x:auto;flex:1}.top nav a{color:var(--mu);text-decoration:none;padding:4px 12px;border-radius:999px;white-space:nowrap;font-size:14px}.top nav a:hover{color:var(--fg);background:var(--sf)}'
+  +'.site{max-width:960px;margin-inline:auto;padding:20px}.site .pg{padding-block:28px;border-bottom:1px solid var(--ln)}.ft{text-align:center;color:var(--mu);padding:30px;font-size:13px}';
+}
+function buildApp(spec,opts){
+  opts=opts||{};
+  const p=Object.assign({},spec.style);
+  const data={title:spec.title,idea:spec.idea,type:spec.type,goal:spec.goal,audience:spec.audience,pages:spec.pages,features:spec.features,items:spec.items,keywords:spec.keywords,action:spec.action};
+  const json=JSON.stringify(data).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
+  const csp="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'"+(opts.pwa?"; worker-src 'self'; manifest-src 'self'":'');
+  return '<!doctype html>\n<html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
+   +'<meta http-equiv="Content-Security-Policy" content="'+csp+'"><meta name="referrer" content="no-referrer">'
+   +'<title>'+esc(spec.title)+'</title><meta name="theme-color" content="'+p.bg+'">'+(opts.pwa?'<link rel="manifest" href="manifest.webmanifest">':'')
+   +'<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap">'
+   +'<style>'+appCSS(p)+'</style></head><body><div id="root"></div>'
+   +'<script>('+PS.appRuntime.toString()+')('+json+');'+(opts.pwa?'if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(function(){});':'')+'<\/script></body></html>';
+}
+/* ---- بسته‌بندی‌ها ---- */
+const pkg='ir.promptsaz.app';
+const ANDROID_WORKFLOW=[
+'name: Build Android APK',
+'',
+'on:',
+'  push:',
+'    branches: [main]',
+'    tags: ["v*"]',
+'  workflow_dispatch:',
+'',
+'permissions:',
+'  contents: write',
+'',
+'jobs:',
+'  build:',
+'    runs-on: ubuntu-latest',
+'    env:',
+'      KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}',
+'      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}',
+'      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}',
+'      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}',
+'    steps:',
+'      - uses: actions/checkout@v4',
+'      - uses: actions/setup-java@v4',
+'        with:',
+'          distribution: temurin',
+'          java-version: 17',
+'      - uses: android-actions/setup-android@v3',
+'      - uses: gradle/actions/setup-gradle@v4',
+'        with:',
+'          gradle-version: "8.7"',
+'      - name: Prepare signing key (optional)',
+'        if: env.KEYSTORE_B64 != \'\'',
+'        run: |',
+'          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"',
+'          echo "KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"',
+'      - name: Build APK',
+'        run: |',
+'          if [ -n "$KEYSTORE_B64" ]; then',
+'            gradle assembleRelease --no-daemon',
+'          else',
+'            gradle assembleDebug --no-daemon',
+'          fi',
+'      - uses: actions/upload-artifact@v4',
+'        with:',
+'          name: android-apk',
+'          path: app/build/outputs/apk/*/*.apk',
+'          if-no-files-found: error',
+'      - name: Publish release (tags only)',
+'        if: startsWith(github.ref, \'refs/tags/v\')',
+'        uses: softprops/action-gh-release@v2',
+'        with:',
+'          files: app/build/outputs/apk/*/*.apk',
+''].join('\n');
+const WINDOWS_WORKFLOW=[
+'name: Build Windows App',
+'',
+'on:',
+'  push:',
+'    branches: [main]',
+'  workflow_dispatch:',
+'',
+'jobs:',
+'  build:',
+'    runs-on: windows-latest',
+'    steps:',
+'      - uses: actions/checkout@v4',
+'      - uses: actions/setup-node@v4',
+'        with:',
+'          node-version: 20',
+'      - run: npm install',
+'      - run: npm run dist',
+'      - uses: actions/upload-artifact@v4',
+'        with:',
+'          name: windows-installer',
+'          path: dist/*.exe',
+''].join('\n');
+const PAGES_WORKFLOW=[
+'name: Deploy to GitHub Pages',
+'',
+'on:',
+'  push:',
+'    branches: [main]',
+'  workflow_dispatch:',
+'',
+'permissions:',
+'  contents: read',
+'  pages: write',
+'  id-token: write',
+'',
+'jobs:',
+'  deploy:',
+'    runs-on: ubuntu-latest',
+'    environment:',
+'      name: github-pages',
+'      url: ${{ steps.deployment.outputs.page_url }}',
+'    steps:',
+'      - uses: actions/checkout@v4',
+'      - uses: actions/configure-pages@v5',
+'      - uses: actions/upload-pages-artifact@v3',
+'        with:',
+'          path: .',
+'      - id: deployment',
+'        uses: actions/deploy-pages@v4',
+''].join('\n');
+const GITIGNORE='*.iml\n.gradle/\n/local.properties\n/.idea/\n.DS_Store\n/build/\n/app/build/\n*.jks\n*.keystore\nnode_modules/\ndist/\n';
+function mainKt(url){
+  let host='';if(url){try{host=new URL(url).host}catch(e){}}
+  const start=url?url:'file:///android_asset/index.html';
+  return 'package '+pkg+'\n\nimport android.annotation.SuppressLint\nimport android.content.Intent\nimport android.os.Bundle\nimport android.webkit.WebResourceRequest\nimport android.webkit.WebSettings\nimport android.webkit.WebView\nimport android.webkit.WebViewClient\nimport androidx.activity.OnBackPressedCallback\nimport androidx.appcompat.app.AppCompatActivity\n\n'
+  +'class MainActivity : AppCompatActivity() {\n    private lateinit var web: WebView\n    private val startUrl = "'+start+'"\n    private val allowedHost = "'+host+'"\n\n'
+  +'    @SuppressLint("SetJavaScriptEnabled")\n    @Suppress("DEPRECATION")\n    override fun onCreate(savedInstanceState: Bundle?) {\n        super.onCreate(savedInstanceState)\n        web = WebView(this)\n'
+  +'        web.settings.javaScriptEnabled = true\n        web.settings.domStorageEnabled = true\n        web.settings.allowFileAccess = false\n        web.settings.allowContentAccess = false\n        web.settings.allowFileAccessFromFileURLs = false\n        web.settings.allowUniversalAccessFromFileURLs = false\n        web.settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW\n        web.settings.cacheMode = WebSettings.LOAD_DEFAULT\n'
+  +'        web.webViewClient = object : WebViewClient() {\n            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {\n                val target = request.url\n                val inside = if (allowedHost.isEmpty()) target.scheme == "file" else target.host == allowedHost\n                if (inside) return false\n                try { startActivity(Intent(Intent.ACTION_VIEW, target)) } catch (e: Exception) { }\n                return true\n            }\n        }\n'
+  +'        setContentView(web)\n        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {\n            override fun handleOnBackPressed() {\n                if (web.canGoBack()) {\n                    web.goBack()\n                } else {\n                    isEnabled = false\n                    onBackPressedDispatcher.onBackPressed()\n                }\n            }\n        })\n'
+  +'        if (savedInstanceState == null) web.loadUrl(startUrl) else web.restoreState(savedInstanceState)\n    }\n\n    override fun onSaveInstanceState(outState: Bundle) {\n        super.onSaveInstanceState(outState)\n        web.saveState(outState)\n    }\n}\n';
+}
+function androidFiles(spec,html,opts){
+  opts=opts||{};const name=spec.title.replace(/[<>&"']/g,''),F={};
+  F['README-fa.md']='# '+name+'\n\nپروژه‌ی اندروید (WebView) ساخته‌شده با پرامپت‌ساز.\n\n## ساخت APK در GitHub (بدون Android Studio)\n1. یک مخزن تازه در GitHub بسازید و همه‌ی فایل‌های این پوشه را در شاخه‌ی `main` بفرستید.\n2. به تب Actions بروید. گردش‌کار «Build Android APK» خودکار اجرا می‌شود (۳ تا ۶ دقیقه).\n3. بعد از سبز شدن، از بخش Artifacts فایل `android-apk` را دانلود کنید.\n4. برای انتشار در Releases: `git tag v1.0.0 && git push origin v1.0.0`\n\n## امضای نسخه‌ی نهایی (اختیاری)\nدر Settings > Secrets and variables > Actions این چهار مقدار را بسازید: `KEYSTORE_B64` (خروجی `base64 -w0 release.jks`)، `KEYSTORE_PASSWORD`، `KEY_ALIAS`، `KEY_PASSWORD`. با وجود `KEYSTORE_B64` نسخه‌ی release امضاشده ساخته می‌شود. فایل keystore و رمزها را هرگز در مخزن commit نکنید.\n\n## ساخت با Android Studio\nپوشه را با Open باز کنید، Gradle را هم‌گام کنید و Build > Build APK(s) را بزنید.\n\n'+(opts.url?'برنامه آدرس `'+opts.url+'` را نمایش می‌دهد و فقط به همین دامنه اجازه‌ی ناوبری داخل برنامه می‌دهد.\n':'محتوای برنامه در `app/src/main/assets/index.html` است. نسخه‌ی PWA در پوشه‌ی `pwa` قرار دارد و روی هر هاست HTTPS قابل نصب است.\n');
+  F['settings.gradle.kts']='pluginManagement {\n    repositories { google(); mavenCentral(); gradlePluginPortal() }\n}\ndependencyResolutionManagement {\n    repositories { google(); mavenCentral() }\n}\nrootProject.name = "PromptSazApp"\ninclude(":app")\n';
+  F['build.gradle.kts']='plugins {\n    id("com.android.application") version "8.5.2" apply false\n    id("org.jetbrains.kotlin.android") version "1.9.24" apply false\n}\n';
+  F['gradle.properties']='org.gradle.jvmargs=-Xmx2048m\nandroid.useAndroidX=true\nkotlin.code.style=official\n';
+  F['.gitignore']=GITIGNORE;
+  F['.github/workflows/android.yml']=ANDROID_WORKFLOW;
+  F['app/build.gradle.kts']='plugins {\n    id("com.android.application")\n    id("org.jetbrains.kotlin.android")\n}\n\nandroid {\n    namespace = "'+pkg+'"\n    compileSdk = 34\n    defaultConfig {\n        applicationId = "'+pkg+'"\n        minSdk = 26\n        targetSdk = 34\n        versionCode = 1\n        versionName = "1.0"\n    }\n    signingConfigs {\n        create("release") {\n            val ksFile = System.getenv("KEYSTORE_FILE")\n            if (ksFile != null) {\n                storeFile = file(ksFile)\n                storePassword = System.getenv("KEYSTORE_PASSWORD")\n                keyAlias = System.getenv("KEY_ALIAS")\n                keyPassword = System.getenv("KEY_PASSWORD")\n            }\n        }\n    }\n    buildTypes {\n        release {\n            isMinifyEnabled = false\n            if (System.getenv("KEYSTORE_FILE") != null) {\n                signingConfig = signingConfigs.getByName("release")\n            }\n        }\n    }\n    compileOptions {\n        sourceCompatibility = JavaVersion.VERSION_17\n        targetCompatibility = JavaVersion.VERSION_17\n    }\n    kotlinOptions { jvmTarget = "17" }\n}\n\ndependencies {\n    implementation("androidx.core:core-ktx:1.13.1")\n    implementation("androidx.appcompat:appcompat:1.7.0")\n}\n';
+  F['app/src/main/AndroidManifest.xml']='<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <uses-permission android:name="android.permission.INTERNET" />\n    <application\n        android:allowBackup="false"\n        android:usesCleartextTraffic="false"\n        android:label="@string/app_name"\n        android:supportsRtl="true"\n        android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">\n        <activity android:name=".MainActivity" android:exported="true">\n            <intent-filter>\n                <action android:name="android.intent.action.MAIN" />\n                <category android:name="android.intent.category.LAUNCHER" />\n            </intent-filter>\n        </activity>\n    </application>\n</manifest>\n';
+  F['app/src/main/res/values/strings.xml']='<resources>\n    <string name="app_name">'+name+'</string>\n</resources>\n';
+  F['app/src/main/java/'+pkg.replace(/\./g,'/')+'/MainActivity.kt']=mainKt(opts.url);
+  if(!opts.url){
+    F['app/src/main/assets/index.html']=html;
+    F['pwa/index.html']=buildApp(spec,{pwa:true});
+    F['pwa/manifest.webmanifest']=JSON.stringify({name:spec.title,short_name:spec.title.slice(0,12),lang:'fa',dir:'rtl',start_url:'./index.html',display:'standalone',background_color:spec.style.bg,theme_color:spec.style.accent,icons:[]},null,2);
+    F['pwa/sw.js']='const C="app-v1";\nself.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(["./","./index.html"])))});\nself.addEventListener("fetch",e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))});\n';
+  }
+  return F;
+}
+function windowsFiles(spec,html){
+  const name=spec.title.replace(/[<>&"']/g,''),id='promptsaz-app';
+  return {
+    'README-fa.md':'# '+name+'\n\nبرنامه‌ی دسکتاپ ویندوز (Electron) ساخته‌شده با پرامپت‌ساز.\n\n## اجرا\nNode.js را نصب کنید، سپس در پوشه‌ی پروژه:\n\n```\nnpm install\nnpm start\n```\n\n## ساخت فایل نصب\n```\nnpm run dist\n```\nفایل نصب در پوشه‌ی `dist` ساخته می‌شود.\n\n## ساخت در GitHub\nپروژه را در شاخه‌ی `main` بفرستید؛ گردش‌کار «Build Windows App» نصب‌کننده را می‌سازد و در Artifacts می‌گذارد.\n',
+    '.gitignore':GITIGNORE,
+    '.github/workflows/windows.yml':WINDOWS_WORKFLOW,
+    'package.json':JSON.stringify({name:id,version:'1.0.0',description:name,main:'main.js',scripts:{start:'electron .',dist:'electron-builder --win'},devDependencies:{electron:'^31.0.0','electron-builder':'^24.13.3'},build:{appId:'ir.promptsaz.desktop',productName:name,win:{target:'nsis'},files:['main.js','index.html']}},null,2),
+    'main.js':'const { app, BrowserWindow, Menu, shell } = require("electron");\nconst path = require("path");\n\nfunction createWindow() {\n  const win = new BrowserWindow({\n    width: 1100,\n    height: 720,\n    minWidth: 720,\n    minHeight: 520,\n    title: '+JSON.stringify(name)+',\n    backgroundColor: '+JSON.stringify(spec.style.bg)+',\n    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true }\n  });\n  win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: "deny" }; });\n  win.webContents.on("will-navigate", (e) => e.preventDefault());\n  Menu.setApplicationMenu(null);\n  win.loadFile(path.join(__dirname, "index.html"));\n}\n\napp.whenReady().then(() => {\n  createWindow();\n  app.on("activate", () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });\n});\napp.on("window-all-closed", () => { if (process.platform !== "darwin") app.quit(); });\n',
+    'index.html':html
+  };
+}
+function siteFiles(spec,html){
+  return {'index.html':html,'404.html':html,'.nojekyll':'','.github/workflows/pages.yml':PAGES_WORKFLOW,'README-fa.md':'# '+spec.title+'\n\nسایت ایستای ساخته‌شده با پرامپت‌ساز.\n\nبرای انتشار: فایل‌ها را در یک مخزن بگذارید و در Settings > Pages گزینه‌ی Source را روی GitHub Actions بگذارید. با هر push روی main سایت منتشر می‌شود.\n'};
+}
+async function zipOf(files){
+  const z=new JSZip();Object.keys(files).forEach(k=>z.file(k,files[k]));
+  return z.generateAsync({type:'blob',compression:'DEFLATE'});
+}
+async function offerZip(name,files){
+  if(typeof JSZip==='undefined'){toast('ساخت فایل فشرده در این نما در دسترس نیست','bad');return}
+  const blob=await zipOf(files);const r=await saveFile(name,blob);
+  if(r&&r.fallback)toast('ذخیره‌ی مستقیم فایل در این نما فعال نیست؛ از «کپی کد» استفاده کنید','bad');
+}
+/* ---- پیش‌نمایش و پنجره ---- */
+function frameFor(type,html){
+  const f='<iframe title="پیش‌نمایش" sandbox="allow-scripts allow-forms" srcdoc="'+html.replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'"></iframe>';
+  if(type==='android')return '<div class="stage"><div class="phone">'+f+'</div></div>';
+  if(type==='windows')return '<div class="stage"><div class="win"><div class="win-bar"><i></i><i></i><i></i><span>برنامه‌ی دسکتاپ</span></div>'+f+'</div></div>';
+  return '<div class="stage"><div class="browser"><div class="br-bar"><i></i><i></i><i></i><span>'+(type==='site'?'https://your-site.example':'index.html')+'</span></div>'+f+'</div></div>';
+}
+PS.openBuilder=function(rec){
+  const sp=rec.spec,type=sp.type,steps=['تحلیل پرامپت','طراحی صفحه‌ها','تولید کد','بسته‌بندی'];
+  const ov=openSheet('ساخت خروجی: '+sp.title,'<div class="row" style="margin-bottom:12px"><span class="chip">'+esc(E.TYPES[type].label)+'</span><span class="pill approved">تأییدشده</span></div><div id="bProg" class="check" style="margin-bottom:12px"></div><div id="bOut"></div>');
+  const prog=$('#bProg',ov);
+  prog.innerHTML=steps.map((s,i)=>'<li style="grid-template-columns:auto 1fr"><span class="dot" id="bd'+i+'" style="width:26px;height:26px;font-size:12px">'+fa(i+1)+'</span><b>'+s+'</b></li>').join('');
+  let i=0;const tick=()=>{
+    if(i>0){const d=$('#bd'+(i-1),ov);if(d){d.style.background='var(--teal)';d.style.color='var(--on-accent)';d.textContent='✓'}}
+    if(i<steps.length){i++;setTimeout(tick,330);return}
+    prog.remove();finish();
+  };
+  function finish(){
+    const html=buildApp(sp),out=$('#bOut',ov);if(!out)return;
+    let files=[];
+    if(type==='android')files=[['zip','دانلود پروژه‌ی اندروید (ZIP)','پروژه‌ی Android Studio با WebView و نسخه‌ی PWA قابل نصب',()=>offerZip(slug(rec)+'-android.zip',androidFiles(sp,html))],['html','دانلود index.html','همین برنامه به‌صورت یک صفحه',()=>offerFile(slug(rec)+'.html',html)]];
+    else if(type==='windows')files=[['zip','دانلود پروژه‌ی ویندوز (ZIP)','پروژه‌ی Electron با دستور اجرا و ساخت نصب‌کننده',()=>offerZip(slug(rec)+'-windows.zip',windowsFiles(sp,html))],['html','دانلود index.html','همین برنامه به‌صورت یک صفحه',()=>offerFile(slug(rec)+'.html',html)]];
+    else if(type==='site')files=[['html','دانلود index.html','سایت کامل در یک فایل',()=>offerFile(slug(rec)+'.html',html)],['zip','دانلود بسته‌ی GitHub Pages (ZIP)','index.html، 404.html و راهنمای انتشار',()=>offerZip(slug(rec)+'-site.zip',siteFiles(sp,html))]];
+    else files=[['html','دانلود فایل HTML','یک فایل مستقل برای باز کردن مستقیم',()=>offerFile(slug(rec)+'.html',html)]];
+    files.push(['copy','کپی کد HTML','کد کامل در کلیپ‌بورد',()=>copyText(html,'کد کپی شد')]);
+    const note={android:'خروجی اندروید پروژه‌ی آماده‌ی ساخت است: با Android Studio یک بار Build APK می‌زنید. نسخه‌ی PWA بدون نیاز به ابزار نصب می‌شود.',windows:'خروجی ویندوز پروژه‌ی Electron است: با npm install و npm start اجرا می‌شود و npm run dist نصب‌کننده می‌سازد.',site:'سایت چندبخشی و واکنش‌گرا است و روی هر هاست ایستا اجرا می‌شود.',html:'یک فایل مستقل است و بدون اینترنت هم کار می‌کند.'}[type];
+    out.innerHTML='<p class="muted" style="margin-bottom:12px">پیش‌نمایش زنده‌ی برنامه‌ای که از پرامپت ساخته شد. داخل آن کلیک کنید و امتحانش کنید.</p>'+frameFor(type,html)
+      +'<p class="hint" style="margin-top:12px">'+esc(note)+'</p><div class="dl-grid">'+files.map((f,n)=>'<button class="dl" type="button" data-n="'+n+'"><b>'+f[1]+'</b><small>'+f[2]+'</small></button>').join('')+'</div>';
+    out.addEventListener('click',e=>{const b=e.target.closest('.dl');if(b)files[+b.dataset.n][3]()});
+  }
+  setTimeout(tick,200);
+};
+PS.build={buildApp,androidFiles,windowsFiles,siteFiles,offerZip,ANDROID_WORKFLOW,WINDOWS_WORKFLOW,PAGES_WORKFLOW};
+})();
+/* ===== اشتراک: آزمایشی ۱۴ روزه، خرید نمایشی، صورتحساب ===== */
+(function(){
+'use strict';
+const {$,$$,esc,fa,money,toast,openSheet,closeSheet,S,saveUsers,me,isAdmin,uid,rand,fmtDate,fmtDT,PLANS,DAY,subState,audit,reauth,clean}=PS;
+const COUPONS={WELCOME20:{pct:20,label:'تخفیف خوش‌آمد ۲۰٪',first:true},SAVE10:{pct:10,label:'تخفیف ۱۰٪',first:false}};
+const VAT=0.10;
+const FEATS={
+  trial:['دسترسی کامل به همه‌ی امکانات','بدون پرداخت و بدون ثبت کارت','یک بار برای هر حساب'],
+  month:['تأیید پرامپت و ساخت خروجی نامحدود','هر چهار نوع خروجی و بسته‌های GitHub','پشتیبانی ایمیلی'],
+  year:['همه‌ی امکانات طرح ماهانه','معادل ۲ ماه رایگان نسبت به ماهانه','اولویت در پشتیبانی']
+};
+const STATE_TXT={trial:'آزمایشی',paid:'فعال',expired:'منقضی',admin:'ادمین'};
+const planName=id=>(PLANS[id]&&PLANS[id].name)||'—';
+
+/* ---- قفل دسترسی: کارهای مهم نیاز به اشتراک فعال دارند ---- */
+PS.gate=function(what){
+  const u=me();
+  if(!u){toast('ابتدا وارد حساب شوید','bad');location.hash='account';return false}
+  if(u.status!=='active'){toast('حساب شما مسدود است','bad');return false}
+  if(subState(u).active)return true;
+  toast('اشتراک شما تمام شده است؛ برای «'+what+'» یک طرح تهیه کنید','bad');location.hash='plans';return false;
+};
+
+/* ---- نشان وضعیت در هدر ---- */
+function drawChip(){
+  const el=$('#planChip'),u=me();if(!el)return;
+  if(!u){el.hidden=true;return}
+  const st=subState(u);el.hidden=false;el.className='planchip '+st.key;
+  el.textContent=st.key==='admin'?'ادمین':st.key==='expired'?'اشتراک منقضی':STATE_TXT[st.key]+' · '+fa(st.left)+' روز';
+}
+PS.drawChip=drawChip;
+
+/* ---- خرید ---- */
+function priceOf(planId,code,u){
+  const p=PLANS[planId];let base=p.price,disc=0,msg='',pct=0;
+  if(code){const c=COUPONS[code];
+    if(!c)msg='کد تخفیف معتبر نیست.';
+    else if(c.first&&u.sub.coupons.includes(code))msg='این کد قبلاً برای حساب شما استفاده شده است.';
+    else{pct=c.pct;disc=Math.round(base*pct/100);msg=c.label+' اعمال شد.'}}
+  const tax=Math.round((base-disc)*VAT);
+  return {base,disc,tax,total:base-disc+tax,msg,pct,ok:!!pct};
+}
+function checkout(planId){
+  const u=me();if(!u){toast('برای خرید وارد حساب شوید','bad');location.hash='account';return}
+  if(u.role==='admin'){toast('ادمین به اشتراک نیاز ندارد','bad');return}
+  const p=PLANS[planId];let code='';
+  const ov=openSheet('خرید: '+p.name,'<div id="coBody"></div>');
+  const draw=()=>{
+    const pr=priceOf(planId,code,u);
+    $('#coBody',ov).innerHTML='<div class="callout" style="margin-bottom:14px">درگاه نمایشی است: هیچ مبلغی کسر نمی‌شود و هیچ اطلاعات کارتی دریافت نمی‌شود.</div>'
+     +'<div class="scroll-x"><table class="tbl" style="min-width:0"><tbody><tr><td>'+esc(p.name)+' ('+fa(p.days)+' روز)</td><td>'+money(pr.base)+' تومان</td></tr>'
+     +(pr.disc?'<tr><td>تخفیف ('+fa(pr.pct)+'٪)</td><td>−'+money(pr.disc)+' تومان</td></tr>':'')
+     +'<tr><td>مالیات بر ارزش افزوده ('+fa(VAT*100)+'٪)</td><td>'+money(pr.tax)+' تومان</td></tr>'
+     +'<tr><td><b>مبلغ قابل پرداخت</b></td><td><b>'+money(pr.total)+' تومان</b></td></tr></tbody></table></div>'
+     +'<div class="field" style="margin-top:14px"><label for="coCode">کد تخفیف (اختیاری)</label><div class="row"><input class="inp" id="coCode" dir="ltr" maxlength="20" placeholder="WELCOME20" value="'+esc(code)+'" style="flex:1;min-width:0"><button class="btn" id="coApply" type="button">اعمال</button></div><div class="hint" id="coMsg">'+esc(pr.msg||'کد نمونه: WELCOME20')+'</div></div>'
+     +'<p class="hint" style="margin-bottom:12px">پس از پرداخت موفق، '+fa(p.days)+' روز به اشتراک شما اضافه می‌شود'+((u.sub.paidUntil>Date.now())?' (به انتهای اشتراک فعلی افزوده می‌شود).':'.')+'</p>'
+     +'<div class="row"><button class="btn teal" id="coPay" type="button">پرداخت موفق (شبیه‌سازی)</button><button class="btn danger" id="coFail" type="button">پرداخت ناموفق (شبیه‌سازی)</button></div>';
+    $('#coApply',ov).onclick=()=>{code=clean($('#coCode',ov).value,20).toUpperCase();draw()};
+    const finish=ok=>{
+      $('#coPay',ov).disabled=$('#coFail',ov).disabled=true;
+      const now=Date.now(),ref=Array.from(rand(4),b=>b.toString(16).padStart(2,'0')).join('').toUpperCase();
+      const inv={id:'INV-'+fa(now).slice(-6)+'-'+ref.slice(0,3),ts:now,plan:planId,amount:pr.total,status:ok?'paid':'failed',ref,code:pr.ok?code:''};
+      u.sub.history.unshift(inv);
+      if(ok){
+        const start=Math.max(now,u.sub.paidUntil||0);
+        u.sub.paidUntil=start+p.days*DAY;u.sub.plan=planId;u.sub.autoRenew=true;
+        if(pr.ok&&COUPONS[code].first)u.sub.coupons.push(code);
+        audit('plan_buy',planId+' '+pr.total,u.id);toast('پرداخت موفق بود؛ اشتراک شما فعال است','ok');
+      }else{audit('payment_fail',planId,u.id);toast('پرداخت ناموفق بود؛ دوباره امتحان کنید','bad')}
+      saveUsers();closeSheet();PS.refresh&&PS.refresh();
+    };
+    $('#coPay',ov).onclick=()=>finish(true);$('#coFail',ov).onclick=()=>finish(false);
+  };
+  draw();
+}
+
+/* ---- رابط ---- */
+function planCard(id,u,st){
+  const p=PLANS[id],pop=id==='year';let action='';
+  if(id==='trial'){
+    if(!u)action='<a class="btn primary" href="#account" style="width:100%">ثبت‌نام و شروع رایگان</a>';
+    else if(u.role==='admin')action='<button class="btn" disabled style="width:100%">ادمین نیازی ندارد</button>';
+    else if(!u.sub.trialUsed)action='<button class="btn primary" data-pa="trial" style="width:100%">شروع ۱۴ روز رایگان</button>';
+    else action='<button class="btn" disabled style="width:100%">'+(st&&st.key==='trial'?'در حال استفاده':'قبلاً استفاده شده')+'</button>';
+  }else action=u?(u.role==='admin'?'<button class="btn" disabled style="width:100%">ادمین نیازی ندارد</button>':'<button class="btn '+(pop?'primary':'')+'" data-pa="'+id+'" style="width:100%">خرید این طرح</button>'):'<a class="btn" href="#account" style="width:100%">برای خرید وارد شوید</a>';
+  return '<div class="plan'+(pop?' pop':'')+'">'+(pop?'<span class="ribbon">پیشنهاد ویژه</span>':'')+'<h3>'+esc(p.name)+'</h3><div class="price">'+(p.price?money(p.price):'رایگان')+(p.price?'<small> تومان</small>':'')+'</div><div class="hint">'+(id==='trial'?'۱۴ روز':id==='month'?'هر ۳۰ روز':'هر سال')+'</div><ul class="plist">'+FEATS[id].map(f=>'<li>'+esc(f)+'</li>').join('')+'</ul>'+action+'</div>';
+}
+function draw(){
+  const box=$('#planBox');if(!box)return;const u=me(),st=u?subState(u):null;
+  let h='';
+  if(u){
+    const total=st.key==='trial'?14:st.key==='paid'?(PLANS[u.sub.plan]||PLANS.month).days:1;
+    const pctLeft=st.key==='admin'?100:Math.max(0,Math.min(100,Math.round((st.left||0)/total*100)));
+    h+='<div class="card raised" style="margin-bottom:16px"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="font-size:17px">اشتراک شما</h3><span class="pill '+st.key+'">'+STATE_TXT[st.key]+'</span></div>';
+    if(st.key==='admin')h+='<p class="muted">حساب ادمین بدون محدودیت زمانی است.</p>';
+    else if(st.key==='expired')h+='<p style="margin-bottom:6px">اشتراک شما تمام شده است.</p><p class="hint">مشاهده‌ی پرامپت‌ها و گرفتن TXT یا JSON آزاد است، اما تأیید، ارسال به صف و ساخت خروجی نیاز به اشتراک دارد.</p>';
+    else h+='<div class="stats" style="margin-bottom:12px"><div class="stat"><b>'+esc(st.key==='paid'?planName(u.sub.plan):'آزمایشی ۱۴ روزه')+'</b><span>طرح فعلی</span></div><div class="stat"><b>'+fa(st.left)+' روز</b><span>باقی‌مانده</span></div><div class="stat"><b>'+esc(fmtDate(st.until))+'</b><span>پایان اشتراک</span></div></div><div class="meter"><i style="width:'+pctLeft+'%"></i></div>';
+    if(st.key==='paid')h+='<div class="row" style="margin-top:14px"><label class="row" style="gap:8px;cursor:pointer"><input type="checkbox" id="arToggle" '+(u.sub.autoRenew?'checked':'')+' style="width:20px;height:20px;accent-color:var(--teal)"> تمدید خودکار</label><span class="hint">در این نسخه‌ی نمایشی تمدید واقعی انجام نمی‌شود.</span></div>';
+    h+='</div>';
+  }else h+='<div class="callout" style="margin-bottom:16px">برای شروع ۱۴ روز رایگان، ثبت‌نام کنید. نیازی به ثبت کارت نیست.</div>';
+  h+='<div class="plans">'+['trial','month','year'].map(id=>planCard(id,u,st)).join('')+'</div>';
+  if(u&&u.role!=='admin'){
+    h+='<div class="card" style="margin-top:16px"><h3 style="font-size:17px;margin-bottom:10px">صورتحساب‌ها</h3>';
+    h+=u.sub.history.length?'<div class="scroll-x"><table class="tbl"><thead><tr><th>شماره</th><th>تاریخ</th><th>طرح</th><th>مبلغ</th><th>وضعیت</th></tr></thead><tbody>'+u.sub.history.slice(0,12).map(i=>'<tr><td class="mono">'+esc(i.id)+'</td><td>'+esc(fmtDate(i.ts))+'</td><td>'+esc(planName(i.plan))+'</td><td>'+money(i.amount)+'</td><td><span class="pill '+(i.status==='paid'?'approved':'rejected')+'">'+(i.status==='paid'?'پرداخت‌شده':'ناموفق')+'</span></td></tr>').join('')+'</tbody></table></div>':'<div class="empty"><b>صورتحسابی ندارید</b>پس از اولین خرید، رسیدها اینجا نمایش داده می‌شوند.</div>';
+    h+='</div>';
+  }
+  if(isAdmin()){
+    const ops=S.users.filter(x=>x.role!=='admin'),c={trial:0,paid:0,expired:0};
+    ops.forEach(x=>{const s=subState(x).key;if(c[s]!=null)c[s]++});
+    const rev=S.users.reduce((a,x)=>a+x.sub.history.filter(i=>i.status==='paid').reduce((b,i)=>b+i.amount,0),0);
+    h+='<div class="card" style="margin-top:16px"><h3 style="font-size:17px;margin-bottom:10px">خلاصه برای ادمین</h3><div class="stats"><div class="stat"><b>'+fa(c.trial)+'</b><span>آزمایشی فعال</span></div><div class="stat"><b>'+fa(c.paid)+'</b><span>مشترک پولی</span></div><div class="stat"><b>'+fa(c.expired)+'</b><span>منقضی</span></div><div class="stat"><b>'+money(rev)+'</b><span>درآمد نمایشی (تومان)</span></div></div><p class="hint" style="margin-top:10px">مدیریت اشتراک هر کاربر از بخش «حساب کاربری > مدیریت کاربران» انجام می‌شود.</p></div>';
+  }
+  box.innerHTML=h;
+}
+PS.drawPlans=draw;
+$('#planBox').addEventListener('click',e=>{
+  const b=e.target.closest('[data-pa]');if(!b)return;const u=me();if(!u)return;
+  if(b.dataset.pa==='trial'){
+    if(u.sub.trialUsed)return;
+    u.sub.trialStart=Date.now();u.sub.trialEnd=Date.now()+14*DAY;u.sub.trialUsed=true;u.sub.plan=u.sub.plan==='none'?'trial':u.sub.plan;
+    saveUsers();audit('trial_start','',u.id);toast('۱۴ روز آزمایشی فعال شد','ok');PS.refresh&&PS.refresh();
+  }else checkout(b.dataset.pa);
+});
+$('#planBox').addEventListener('change',e=>{
+  if(e.target.id!=='arToggle')return;const u=me();if(!u)return;
+  u.sub.autoRenew=e.target.checked;saveUsers();audit('autorenew',u.sub.autoRenew?'on':'off',u.id);
+  toast(u.sub.autoRenew?'تمدید خودکار روشن شد':'تمدید خودکار خاموش شد؛ اشتراک تا پایان دوره فعال می‌ماند','ok');
+});
+/* ---- هشدار نزدیکی پایان (فقط یک بار برای هر ورود) ---- */
+PS.expiryNotice=function(){
+  const u=me();if(!u||u.role==='admin')return;const st=subState(u);
+  if(st.key==='expired')toast('اشتراک شما تمام شده است. از بخش «اشتراک» تمدید کنید.','bad');
+  else if(st.left<=3)toast('فقط '+fa(st.left)+' روز تا پایان اشتراک '+(st.key==='trial'?'آزمایشی':'')+' باقی است');
+};
+})();
+/* ===== حساب کاربری: ورود امن، ۲FA، نشست‌ها، پروفایل ===== */
+(function(){
+'use strict';
+const {$,$$,store,clean,esc,fa,toast,copyText,saveFile,S,saveUsers,me,isAdmin,rand,sha256,hashPw,verifyPw,dummyVerify,cryptoOK,openSheet,closeSheet,audit,lockLeft,failAttempt,clearAttempt,safeEq,reauth,fmtDate,fmtDT,subState,newTrial,uid,userById}=PS;
+const ROLE={admin:'ادمین',operator:'اپراتور'};
+const ABS_MS=8*3600*1000;
+let authTab='login', pending=null, idleMin=store.get('idle',5), lastActive=Date.now(), warned=false;
+
+/* ---- سیاست رمز ---- */
+const COMMON=['password','passw0rd','12345678','123456789','1234567890','qwerty','abc12345','11111111','00000000','iloveyou','admin123','letmein','welcome1','sara@1234','reza@1234','test1234','pass1234'];
+function pwIssues(p,un){
+  const a=[],l=p.toLowerCase();
+  if(p.length<10)a.push('حداقل ۱۰ نویسه');
+  if(!/[A-Za-z]/.test(p)||!/\d/.test(p))a.push('ترکیب حرف و عدد');
+  if(COMMON.some(c=>l.includes(c)))a.push('رمز رایج و قابل‌حدس');
+  if(un&&un.length>2&&l.includes(un.toLowerCase()))a.push('نام کاربری داخل رمز نباشد');
+  if(/(.)\1{3,}/.test(p))a.push('تکرار پشت‌سرهم یک نویسه');
+  return a;
+}
+function pwScore(p){let s=0;if(p.length>=10)s++;if(p.length>=14)s++;if(/[a-z]/.test(p)&&/[A-Z]/.test(p))s++;if(/\d/.test(p)&&/[^A-Za-z0-9]/.test(p))s++;return pwIssues(p).length?Math.min(s,2):s}
+function genPw(){
+  const al='abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';let p;
+  do{p=Array.from(rand(14),b=>al[b%al.length]).join('')}while(pwIssues(p).length||!/[a-z]/.test(p)||!/[A-Z]/.test(p));
+  return p;
+}
+PS.pwIssues=pwIssues;PS.genPw=genPw;
+const validMail=m=>/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(m);
+
+/* ---- TOTP (RFC 6238) ---- */
+const B32='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+function b32enc(bytes){let bits='',out='';bytes.forEach(b=>bits+=b.toString(2).padStart(8,'0'));for(let i=0;i<bits.length;i+=5)out+=B32[parseInt(bits.slice(i,i+5).padEnd(5,'0'),2)];return out}
+function b32dec(s){let bits='';for(const c of s.replace(/=+$/,'').toUpperCase()){const v=B32.indexOf(c);if(v<0)continue;bits+=v.toString(2).padStart(5,'0')}const o=[];for(let i=0;i+8<=bits.length;i+=8)o.push(parseInt(bits.slice(i,i+8),2));return new Uint8Array(o)}
+async function totp(secret,step){
+  const key=await crypto.subtle.importKey('raw',b32dec(secret),{name:'HMAC',hash:'SHA-1'},false,['sign']);
+  const buf=new ArrayBuffer(8),dv=new DataView(buf);dv.setUint32(0,Math.floor(step/4294967296));dv.setUint32(4,step>>>0);
+  const h=new Uint8Array(await crypto.subtle.sign('HMAC',key,buf)),o=h[19]&15;
+  const n=((h[o]&127)<<24)|(h[o+1]<<16)|(h[o+2]<<8)|h[o+3];return String(n%1000000).padStart(6,'0');
+}
+async function verifyTotp(u,code){
+  const step=Math.floor(Date.now()/30000);
+  for(const d of [-1,0,1]){const s=step+d;if(s<=(u.totp.last||0))continue;if(safeEq(await totp(u.totp.secret,s),code)){u.totp.last=s;return true}}
+  return false;
+}
+PS.totp=totp;PS.b32enc=b32enc;
+async function makeRecovery(){
+  const al='abcdefghjkmnpqrstuvwxyz23456789',codes=[],hashes=[];
+  for(let i=0;i<8;i++){const c=Array.from(rand(10),b=>al[b%al.length]).join('');codes.push(c.slice(0,5)+'-'+c.slice(5));hashes.push(await sha256('rec:'+c))}
+  return {codes,hashes};
+}
+
+/* ---- نشست ---- */
+function finishLogin(u){
+  u.lastLogin=Date.now();u.sv=u.sv||1;saveUsers();
+  S.session={uid:u.id,sv:u.sv,start:Date.now(),at:Date.now()};store.set('session',S.session);
+  lastActive=Date.now();warned=false;S.reauthAt=0;pending=null;authTab='login';
+  audit('login_ok','@'+u.username,u.id);refresh();toast('خوش آمدید، '+u.name,'ok');
+  if(u.mustChange)forceChange(u);else PS.expiryNotice&&PS.expiryNotice();
+}
+function logout(msg,reason){
+  const u=me();if(u)audit(reason||'logout','@'+u.username,u.id);
+  S.session=null;store.del('session');S.reauthAt=0;pending=null;authTab='login';
+  closeSheet(true);if(msg)toast(msg);refresh();
+}
+PS.logout=logout;
+function touch(){lastActive=Date.now();warned=false}
+['pointerdown','keydown','touchstart','scroll'].forEach(ev=>addEventListener(ev,touch,{passive:true}));
+function sessionCheck(){
+  if(!S.session)return;const u=me();
+  if(!u)return logout('حساب شما دیگر وجود ندارد','session_invalid');
+  if(u.status!=='active')return logout('حساب شما مسدود شده است','session_blocked');
+  if(u.sv!==S.session.sv)return logout('نشست شما از جای دیگر بسته شد','session_revoked');
+  if(Date.now()-S.session.start>ABS_MS)return logout('زمان مجاز نشست (۸ ساعت) تمام شد؛ دوباره وارد شوید','session_expired');
+  const left=idleMin*60000-(Date.now()-lastActive);
+  if(left<=0)return logout('به‌دلیل بی‌فعالیتی از حساب خارج شدید','idle_logout');
+  if(left<=30000&&!warned){warned=true;toast('۳۰ ثانیه تا خروج خودکار؛ برای ادامه کلیک کنید')}
+  const el=$('#idleLeft');if(el)el.textContent=fa(Math.floor(left/60000))+':'+fa(String(Math.floor(left/1000)%60).padStart(2,'0'));
+}
+let tick=0;
+setInterval(()=>{
+  sessionCheck();
+  if(S.session&&++tick%15===0){S.session.at=Date.now()-(Date.now()-lastActive);store.set('session',S.session)}
+  if(authTab==='login'&&!S.session){const lk=$('#lockTxt');if(lk)drawLockInfo()}
+},1000);
+if(S.session){
+  const u=me();
+  if(!u||u.status!=='active'||u.sv!==S.session.sv||Date.now()-(S.session.start||0)>ABS_MS||Date.now()-(S.session.at||0)>idleMin*60000){S.session=null;store.del('session')}
+}
+addEventListener('storage',e=>{
+  if(!e.key||e.key.indexOf('ps:')!==0)return;
+  try{
+    if(e.key==='ps:users'&&e.newValue){S.users=JSON.parse(e.newValue);S.users.forEach(PS.normalizeUser)}
+    if(e.key==='ps:session'){S.session=e.newValue?JSON.parse(e.newValue):null;if(S.session)lastActive=Date.now()}
+    if(e.key==='ps:prompts'&&e.newValue)S.prompts=JSON.parse(e.newValue);
+  }catch(x){}
+  refresh();
+});
+
+/* ---- قطعات رابط ---- */
+function field(id,label,type,extra){return '<div class="field"><label for="'+id+'">'+label+'</label><input class="inp" id="'+id+'" type="'+(type||'text')+'" '+(extra||'')+'></div>'}
+function pwField(id,label,ac,meter){
+  return '<div class="field"><label for="'+id+'">'+label+'</label><div class="pwrow"><input class="inp" id="'+id+'" type="password" dir="ltr" maxlength="64" autocomplete="'+ac+'"'+(meter?' data-pwm="1"':'')+'><button type="button" class="pwtoggle" data-tg="'+id+'">نمایش</button></div>'
+   +(meter?'<div class="pwm" data-s="0" id="'+id+'M"><i></i><i></i><i></i><i></i></div><div class="hint" id="'+id+'H">حداقل ۱۰ نویسه با حرف و عدد</div>':'')+'</div>';
+}
+PS.field=field;PS.pwField=pwField;
+function drawWho(){
+  const u=me(),b=$('#whoBtn');
+  b.innerHTML=u?'<span class="av">'+esc(u.name.trim().charAt(0))+'</span><span>'+esc(u.name)+'</span>':'<span class="av">؟</span><span>ورود</span>';
+  b.onclick=()=>{location.hash='account'};
+}
+function drawLockInfo(){
+  const el=$('#lockTxt');if(!el)return;const k=(($('#lUser')||{}).value||'').trim().toLowerCase();
+  const left=Math.max(k?lockLeft(k):0,lockLeft('*global'));
+  el.textContent=left?'ورود '+fa(left)+' ثانیه قفل است.':'بعد از ۵ تلاش ناموفق، ورود قفل می‌شود و با هر قفل مدت آن دو برابر می‌شود.';
+}
+function loggedOutHTML(){
+  if(authTab==='2fa'&&pending){
+    return '<div class="card raised"><h3 style="font-size:18px;margin-bottom:6px">تأیید دو مرحله‌ای</h3><p class="hint" style="margin-bottom:14px">'+(pending.rec?'یکی از کدهای بازیابی را وارد کنید.':'کد ۶ رقمی برنامه‌ی احراز هویت (Authenticator) را وارد کنید.')+'</p><form id="tfF" novalidate>'
+      +'<div class="field"><label for="tfCode">'+(pending.rec?'کد بازیابی':'کد ۶ رقمی')+'</label><input class="inp mono" id="tfCode" inputmode="'+(pending.rec?'text':'numeric')+'" autocomplete="one-time-code" maxlength="'+(pending.rec?12:6)+'" dir="ltr"></div><div class="err" id="tfErr" role="alert"></div>'
+      +'<button class="btn primary" style="width:100%" type="submit">تأیید و ورود</button></form><div class="row" style="margin-top:12px;justify-content:space-between"><button class="btn sm" type="button" data-act="tf-toggle">'+(pending.rec?'استفاده از کد برنامه':'استفاده از کد بازیابی')+'</button><button class="btn sm" type="button" data-act="tf-cancel">انصراف</button></div></div>'
+      +'<div class="card"><h3 style="font-size:17px;margin-bottom:6px">چرا کد دوم؟</h3><p class="hint">حتی اگر رمز شما لو برود، بدون کد برنامه‌ی احراز هویت کسی وارد نمی‌شود.</p></div>';
+  }
+  return '<div class="card raised"><div class="tabs" role="tablist"><button class="tab'+(authTab==='login'?' on':'')+'" data-at="login" type="button">ورود</button><button class="tab'+(authTab==='reg'?' on':'')+'" data-at="reg" type="button">ثبت‌نام</button></div>'
+   +(authTab==='login'
+     ?'<form id="loginF" novalidate>'+field('lUser','نام کاربری یا ایمیل','text','autocomplete="username" dir="ltr" maxlength="60"')+pwField('lPass','رمز عبور','current-password',false)+'<div class="err" id="lErr" role="alert"></div><button class="btn primary" style="width:100%" type="submit">ورود</button><p class="hint" style="margin-top:10px">رمز را فراموش کرده‌اید؟ ادمین می‌تواند رمز موقت بسازد.</p></form>'
+     :'<form id="regF" novalidate>'+field('rName','نام و نام خانوادگی','text','maxlength="40" autocomplete="name"')+field('rUser','نام کاربری (حروف انگلیسی، عدد و _)','text','dir="ltr" maxlength="20" autocomplete="username"')+field('rMail','ایمیل','email','dir="ltr" maxlength="60" autocomplete="email"')+pwField('rPass','رمز عبور','new-password',true)+pwField('rPass2','تکرار رمز عبور','new-password',false)+'<div class="err" id="rErr" role="alert"></div><button class="btn primary" style="width:100%" type="submit">ساخت حساب و شروع ۱۴ روز رایگان</button></form>')
+   +'</div><div class="card"><h3 style="font-size:17px;margin-bottom:6px">حساب‌های نمونه</h3><p class="hint" style="margin-bottom:12px">برای امتحان سریع. این رمزها فقط برای نمایش‌اند و پیش از انتشار عمومی باید عوض شوند.</p>'
+   +'<div class="qlist"><div class="q" style="animation:none"><div class="row" style="justify-content:space-between"><div><b>سارا احمدی</b><div class="hint">ادمین · <span class="mono">sara</span> / <span class="mono">Sara@1234</span></div></div><button class="btn sm teal" type="button" data-fill="sara|Sara@1234">ورود</button></div></div>'
+   +'<div class="q" style="animation:none"><div class="row" style="justify-content:space-between"><div><b>رضا کریمی</b><div class="hint">اپراتور · <span class="mono">reza</span> / <span class="mono">Reza@1234</span></div></div><button class="btn sm teal" type="button" data-fill="reza|Reza@1234">ورود</button></div></div></div>'
+   +'<div class="hint" id="lockTxt" style="margin-top:12px"></div></div>';
+}
+function loggedInHTML(u){
+  const st=subState(u),tf=u.totp.on;
+  return '<div class="card raised"><div class="row" style="margin-bottom:14px"><span class="av" style="width:52px;height:52px;font-size:22px">'+esc(u.name.trim().charAt(0))+'</span><div><h3 style="font-size:18px">'+esc(u.name)+'</h3><div class="row" style="gap:8px"><span class="pill '+(u.role==='admin'?'approved':'pending')+'">'+ROLE[u.role]+'</span><span class="hint mono">@'+esc(u.username)+'</span></div></div></div>'
+   +'<p class="hint" style="margin-bottom:14px">عضویت از '+esc(fmtDate(u.created))+' · آخرین ورود '+(u.lastLogin?esc(fmtDT(u.lastLogin)):'—')+'</p>'
+   +'<form id="profF" novalidate>'+field('pName','نام','text','maxlength="40" value="'+esc(u.name)+'"')+field('pMail','ایمیل','email','dir="ltr" maxlength="60" value="'+esc(u.email)+'"')+field('pBio','درباره‌ی شما','text','maxlength="120" value="'+esc(u.bio||'')+'"')+'<div class="err" id="pErr" role="alert"></div><div class="row"><button class="btn primary" type="submit">ذخیره‌ی پروفایل</button><button class="btn" type="button" data-act="logout">خروج</button></div></form></div>'
+   +'<div class="card"><h3 style="font-size:17px;margin-bottom:10px">اشتراک</h3><div class="row" style="justify-content:space-between"><span class="pill '+st.key+'">'+({trial:'آزمایشی',paid:'فعال',expired:'منقضی',admin:'ادمین'})[st.key]+'</span><span class="muted">'+(st.key==='admin'?'بدون محدودیت':st.key==='expired'?'تمام شده':fa(st.left)+' روز باقی است')+'</span><a class="btn sm" href="#plans">مدیریت اشتراک</a></div></div>'
+   +'<div class="card"><h3 style="font-size:17px;margin-bottom:10px">تغییر رمز عبور</h3><form id="pwF" novalidate>'+pwField('cOld','رمز فعلی','current-password',false)+pwField('cNew','رمز جدید','new-password',true)+pwField('cNew2','تکرار رمز جدید','new-password',false)+'<div class="err" id="cErr" role="alert"></div><button class="btn" type="submit">تغییر رمز</button></form></div>'
+   +'<div class="card"><h3 style="font-size:17px;margin-bottom:6px">ورود دو مرحله‌ای</h3><div class="row" style="margin-bottom:10px"><span class="pill '+(tf?'approved':'pending')+'">'+(tf?'فعال':'غیرفعال')+'</span>'+(tf?'<span class="hint">کدهای بازیابی باقی‌مانده: '+fa(u.totp.rec.length)+'</span>':'')+'</div><p class="hint" style="margin-bottom:12px">با یک برنامه‌ی Authenticator (مثل Google Authenticator یا Aegis) هنگام ورود کد ۶ رقمی می‌گیرد.</p><div class="row">'
+   +(tf?'<button class="btn sm" type="button" data-act="tf-regen">کدهای بازیابی تازه</button><button class="btn sm danger" type="button" data-act="tf-off">غیرفعال‌سازی</button>':'<button class="btn teal" type="button" data-act="tf-start">فعال‌سازی</button>')+'</div></div>'
+   +'<div class="card"><h3 style="font-size:17px;margin-bottom:6px">نشست‌ها</h3><p class="hint" style="margin-bottom:10px">نشست فعلی از '+esc(fmtDT(S.session.start))+' شروع شده و حداکثر تا ۸ ساعت اعتبار دارد. بی‌فعالیتی بیش از '+fa(idleMin)+' دقیقه آن را می‌بندد.</p><button class="btn sm" type="button" data-act="kill-others">بستن نشست‌های دیگر</button></div>'
+   +'<div class="card" style="border-color:color-mix(in srgb,var(--bad) 40%,transparent)"><h3 style="font-size:17px;margin-bottom:6px">حذف حساب</h3><p class="hint" style="margin-bottom:10px">این کار برگشت‌پذیر نیست. پرامپت‌های شما در صف می‌مانند.</p><div id="delArea"><button class="btn danger" type="button" data-act="del-start">حذف حساب من</button></div></div>';
+}
+function drawAccount(){
+  const box=$('#accBox'),u=me();if(!box)return;
+  if(!u){box.innerHTML='<div class="grid2">'+loggedOutHTML()+'</div>';drawLockInfo();return}
+  box.innerHTML='<div class="grid2">'+loggedInHTML(u)+'</div>'+(PS.adminPanel?PS.adminPanel():'');
+}
+function refresh(){
+  drawWho();drawAccount();
+  PS.drawChip&&PS.drawChip();PS.drawPlans&&PS.drawPlans();PS.drawSecurity&&PS.drawSecurity();PS.drawQueue&&PS.drawQueue();
+}
+PS.refresh=refresh;PS.drawAccount=drawAccount;
+
+/* ---- تغییر اجباری رمز (حساب ساخته‌شده توسط ادمین یا رمز موقت) ---- */
+function forceChange(u){
+  openSheet('تعیین رمز جدید','<p class="hint" style="margin-bottom:12px">رمز شما را ادمین ساخته است. برای ادامه، رمز دلخواه و قوی انتخاب کنید.</p><form id="fcF" novalidate>'+pwField('fcNew','رمز جدید','new-password',true)+pwField('fcNew2','تکرار رمز جدید','new-password',false)+'<div class="err" id="fcErr" role="alert"></div><button class="btn primary" style="width:100%" type="submit">ذخیره و ادامه</button></form>',{lock:true});
+}
+
+/* ---- ارسال فرم‌ها ---- */
+const H={};
+H.loginF=async()=>{
+  const E=()=>$('#lErr');
+  if(!cryptoOK){E().textContent='مرورگر از رمزنگاری امن پشتیبانی نمی‌کند؛ صفحه را روی HTTPS باز کنید.';return}
+  const key=clean($('#lUser').value,60).toLowerCase(),pw=$('#lPass').value;
+  if(!key||!pw){E().textContent='نام کاربری و رمز را وارد کنید.';return}
+  const left=Math.max(lockLeft(key),lockLeft('*global'));
+  if(left){E().textContent='تلاش‌های ناموفق زیاد بود. '+fa(left)+' ثانیه دیگر دوباره امتحان کنید.';return}
+  const btn=$('#loginF button[type=submit]');btn.disabled=true;
+  const u=S.users.find(x=>x.username.toLowerCase()===key||x.email.toLowerCase()===key);
+  let ok=false;if(u)ok=await verifyPw(u,pw);else await dummyVerify(pw);
+  if($('#loginF'))$('#loginF button[type=submit]').disabled=false;
+  if(!ok){
+    const r=failAttempt(key);failAttempt('*global',20);audit('login_fail','@'+key.slice(0,30),'-');
+    const l2=lockLeft(key);
+    if(E())E().textContent=l2?'ورود قفل شد؛ '+fa(l2)+' ثانیه صبر کنید.':'نام کاربری یا رمز درست نیست. '+fa(5-r.n)+' تلاش دیگر تا قفل باقی است.';
+    drawLockInfo();return;
+  }
+  clearAttempt(key);
+  if(u.v!==2){Object.assign(u,await hashPw(pw));saveUsers();audit('hash_upgrade','@'+u.username,u.id)}
+  if(u.status!=='active'){audit('login_blocked','@'+u.username,u.id);if(E())E().textContent='این حساب مسدود شده است؛ با ادمین تماس بگیرید.';return}
+  if(u.totp.on){pending={uid:u.id,at:Date.now(),rec:false};authTab='2fa';drawAccount();const c=$('#tfCode');c&&c.focus();return}
+  finishLogin(u);
+};
+H.tfF=async()=>{
+  const E=()=>$('#tfErr'),u=pending&&userById(pending.uid);
+  if(!u||Date.now()-pending.at>180000){pending=null;authTab='login';drawAccount();toast('زمان تأیید دو مرحله‌ای تمام شد؛ دوباره وارد شوید','bad');return}
+  const key='2fa:'+u.id,left=lockLeft(key);
+  if(left){E().textContent='تلاش زیاد بود؛ '+fa(left)+' ثانیه صبر کنید.';return}
+  const code=clean($('#tfCode').value,20).replace(/[\s-]/g,'').toLowerCase();let ok=false;
+  if(pending.rec){const h=await sha256('rec:'+code),i=u.totp.rec.indexOf(h);if(i>=0){u.totp.rec.splice(i,1);ok=true;audit('2fa_recovery_used','@'+u.username,u.id)}}
+  else if(/^\d{6}$/.test(code))ok=await verifyTotp(u,code);
+  if(!ok){failAttempt(key);audit('2fa_fail','@'+u.username,u.id);if(E())E().textContent='کد درست نیست.';return}
+  clearAttempt(key);saveUsers();finishLogin(u);
+};
+H.regF=async()=>{
+  const E=m=>{$('#rErr').textContent=m};
+  const name=clean($('#rName').value,40),un=clean($('#rUser').value,20).toLowerCase(),mail=clean($('#rMail').value,60).toLowerCase(),p1=$('#rPass').value,p2=$('#rPass2').value;
+  if(!cryptoOK)return E('مرورگر از رمزنگاری امن پشتیبانی نمی‌کند.');
+  if(name.length<2)return E('نام را وارد کنید.');
+  if(!/^[a-z0-9_]{3,20}$/.test(un))return E('نام کاربری باید ۳ تا ۲۰ نویسه‌ی انگلیسی، عدد یا _ باشد.');
+  if(!validMail(mail))return E('ایمیل معتبر نیست.');
+  const is=pwIssues(p1,un);if(is.length)return E('رمز ضعیف است: '+is.join('، ')+'.');
+  if(p1!==p2)return E('تکرار رمز با رمز یکی نیست.');
+  const regs=store.get('regs',[]).filter(t=>Date.now()-t<600000);
+  if(regs.length>=3)return E('تعداد ثبت‌نام در این دستگاه زیاد بود؛ چند دقیقه بعد دوباره امتحان کنید.');
+  if(S.users.some(x=>x.username.toLowerCase()===un))return E('این نام کاربری قبلاً گرفته شده است.');
+  if(S.users.some(x=>x.email.toLowerCase()===mail))return E('با این ایمیل قبلاً ثبت‌نام شده است.');
+  const btn=$('#regF button[type=submit]');btn.disabled=true;
+  const h=await hashPw(p1);
+  const u=PS.normalizeUser(Object.assign({id:'u-'+uid(),name,username:un,email:mail,role:'operator',bio:'',created:Date.now(),sub:newTrial(14)},h));
+  S.users.push(u);saveUsers();regs.push(Date.now());store.set('regs',regs);audit('register','@'+un,u.id);finishLogin(u);
+};
+H.profF=()=>{
+  const u=me(),name=clean($('#pName').value,40),mail=clean($('#pMail').value,60).toLowerCase(),bio=clean($('#pBio').value,120),E=m=>{$('#pErr').textContent=m};
+  if(name.length<2)return E('نام را وارد کنید.');
+  if(!validMail(mail))return E('ایمیل معتبر نیست.');
+  if(S.users.some(x=>x.id!==u.id&&x.email.toLowerCase()===mail))return E('این ایمیل برای حساب دیگری ثبت شده است.');
+  Object.assign(u,{name,email:mail,bio});saveUsers();audit('profile_edit','',u.id);refresh();toast('پروفایل ذخیره شد','ok');
+};
+H.pwF=async()=>{
+  const u=me(),o=$('#cOld').value,n=$('#cNew').value,n2=$('#cNew2').value,E=m=>{$('#cErr').textContent=m};
+  const key='pw:'+u.id,left=lockLeft(key);if(left)return E('تلاش زیاد بود؛ '+fa(left)+' ثانیه صبر کنید.');
+  if(!await verifyPw(u,o)){failAttempt(key);return E('رمز فعلی درست نیست.')}
+  clearAttempt(key);
+  const is=pwIssues(n,u.username);if(is.length)return E('رمز جدید ضعیف است: '+is.join('، ')+'.');
+  if(n!==n2)return E('تکرار رمز جدید یکی نیست.');
+  if(n===o)return E('رمز جدید باید با رمز فعلی فرق داشته باشد.');
+  Object.assign(u,await hashPw(n));u.sv=(u.sv||1)+1;u.mustChange=false;S.session.sv=u.sv;store.set('session',S.session);
+  saveUsers();audit('password_change','@'+u.username,u.id);E('');refresh();toast('رمز تغییر کرد؛ نشست‌های دیگر بسته شدند','ok');
+};
+H.fcF=async()=>{
+  const u=me(),n=$('#fcNew').value,n2=$('#fcNew2').value,E=m=>{$('#fcErr').textContent=m};
+  const is=pwIssues(n,u.username);if(is.length)return E('رمز ضعیف است: '+is.join('، ')+'.');
+  if(n!==n2)return E('تکرار رمز یکی نیست.');
+  if(await verifyPw(u,n))return E('رمز جدید باید با رمز موقت فرق داشته باشد.');
+  Object.assign(u,await hashPw(n));u.sv=(u.sv||1)+1;u.mustChange=false;S.session.sv=u.sv;store.set('session',S.session);
+  saveUsers();audit('password_change','forced @'+u.username,u.id);closeSheet(true);refresh();toast('رمز جدید ذخیره شد','ok');PS.expiryNotice&&PS.expiryNotice();
+};
+document.addEventListener('submit',e=>{
+  const h=H[e.target.id];if(!h)return;e.preventDefault();
+  Promise.resolve(h()).catch(err=>{toast('خطای غیرمنتظره؛ دوباره امتحان کنید','bad');console.error(err)});
+});
+
+/* ---- کلیک‌ها و تغییرها ---- */
+async function tfStart(){
+  const u=me();if(!await reauth('برای فعال‌سازی ورود دو مرحله‌ای رمز خود را تأیید کنید.'))return;
+  const secret=b32enc(rand(20)),uri='otpauth://totp/'+encodeURIComponent('PromptSaz:'+u.username)+'?secret='+secret+'&issuer=PromptSaz&digits=6&period=30';
+  const ov=openSheet('فعال‌سازی ورود دو مرحله‌ای','<ol class="ul" style="margin-bottom:14px"><li>برنامه‌ی Authenticator را باز کنید و گزینه‌ی «وارد کردن کلید» را بزنید.</li><li>این کلید را وارد کنید (نوع: مبتنی بر زمان):</li></ol><div class="promptbox mono" style="max-height:none;margin-bottom:8px;user-select:all" id="tfSecret">'+secret.match(/.{1,4}/g).join(' ')+'</div><div class="row" style="margin-bottom:14px"><button class="btn sm" type="button" id="tfCopy">کپی کلید</button><button class="btn sm" type="button" id="tfCopyUri">کپی پیوند otpauth</button></div><div class="field"><label for="tfIn">کد ۶ رقمی نمایش‌داده‌شده در برنامه</label><input class="inp mono" id="tfIn" inputmode="numeric" maxlength="6" dir="ltr" autocomplete="off"></div><div class="err" id="tfE" role="alert"></div><div class="row"><button class="btn primary" type="button" id="tfOk">تأیید و فعال‌سازی</button><button class="btn" type="button" data-close>انصراف</button></div>');
+  $('#tfCopy',ov).onclick=()=>copyText(secret,'کلید کپی شد');$('#tfCopyUri',ov).onclick=()=>copyText(uri,'پیوند کپی شد');
+  $('#tfOk',ov).onclick=async()=>{
+    const code=$('#tfIn',ov).value.trim();if(!/^\d{6}$/.test(code)){$('#tfE',ov).textContent='کد باید ۶ رقم باشد.';return}
+    const step=Math.floor(Date.now()/30000);let hit=0;
+    for(const d of [-1,0,1]){if(safeEq(await totp(secret,step+d),code)){hit=step+d;break}}
+    if(!hit){$('#tfE',ov).textContent='کد درست نیست؛ ساعت گوشی را بررسی کنید و دوباره بزنید.';return}
+    const rc=await makeRecovery();u.totp={on:true,secret,last:hit,rec:rc.hashes};saveUsers();audit('2fa_on','@'+u.username,u.id);
+    showRecovery(rc.codes);refresh();toast('ورود دو مرحله‌ای فعال شد','ok');
+  };
+}
+function showRecovery(codes){
+  const txt='کدهای بازیابی پرامپت‌ساز (هر کد فقط یک بار)\n\n'+codes.join('\n')+'\n';
+  const ov=openSheet('کدهای بازیابی','<p class="hint" style="margin-bottom:10px">این کدها فقط همین یک بار نمایش داده می‌شوند. اگر گوشی را گم کردید، با آن‌ها وارد می‌شوید. جایی امن نگه دارید.</p><div class="promptbox mono" style="max-height:none;user-select:all">'+codes.join('\n')+'</div><div class="row" style="margin-top:12px"><button class="btn" type="button" id="rcCopy">کپی</button><button class="btn" type="button" id="rcTxt">ذخیره TXT</button><button class="btn primary" type="button" data-close>ذخیره کردم</button></div>');
+  $('#rcCopy',ov).onclick=()=>copyText(txt,'کدها کپی شد');$('#rcTxt',ov).onclick=()=>PS.offerFile?PS.offerFile('promptsaz-recovery-codes.txt',txt):copyText(txt);
+}
+$('#accBox').addEventListener('click',async e=>{
+  const t=e.target.closest('[data-at]');if(t){authTab=t.dataset.at;drawAccount();return}
+  const tg=e.target.closest('[data-tg]');
+  if(tg){const i=$('#'+tg.dataset.tg);if(i){const show=i.type==='password';i.type=show?'text':'password';tg.textContent=show?'پنهان':'نمایش'}return}
+  const fl=e.target.closest('[data-fill]');
+  if(fl){
+    const [un,pw]=fl.dataset.fill.split('|'),u=S.users.find(x=>x.username===un);
+    if(!u){toast('این حساب نمونه حذف شده است','bad');return}
+    const left=Math.max(lockLeft(un),lockLeft('*global'));if(left){toast('ورود قفل است؛ '+fa(left)+' ثانیه صبر کنید','bad');return}
+    if(!await verifyPw(u,pw)){toast('رمز این حساب نمونه تغییر کرده است؛ با رمز جدید وارد شوید','bad');authTab='login';drawAccount();return}
+    if(u.v!==2){Object.assign(u,await hashPw(pw));saveUsers()}
+    if(u.status!=='active'){toast('این حساب مسدود است','bad');return}
+    if(u.totp.on){pending={uid:u.id,at:Date.now(),rec:false};authTab='2fa';drawAccount();return}
+    finishLogin(u);return;
+  }
+  const a=e.target.closest('[data-act]');if(!a)return;const act=a.dataset.act,u=me();
+  if(act==='logout')logout('از حساب خارج شدید');
+  else if(act==='tf-toggle'&&pending){pending.rec=!pending.rec;drawAccount()}
+  else if(act==='tf-cancel'){pending=null;authTab='login';drawAccount()}
+  else if(!u)return;
+  else if(act==='tf-start')tfStart();
+  else if(act==='tf-off'){if(!await reauth('برای غیرفعال‌سازی ورود دو مرحله‌ای رمز خود را تأیید کنید.'))return;u.totp={on:false,secret:'',last:0,rec:[]};saveUsers();audit('2fa_off','@'+u.username,u.id);refresh();toast('ورود دو مرحله‌ای غیرفعال شد')}
+  else if(act==='tf-regen'){if(!await reauth('برای ساخت کدهای بازیابی تازه رمز خود را تأیید کنید.'))return;const rc=await makeRecovery();u.totp.rec=rc.hashes;saveUsers();audit('2fa_regen','@'+u.username,u.id);showRecovery(rc.codes);refresh()}
+  else if(act==='kill-others'){u.sv=(u.sv||1)+1;S.session.sv=u.sv;store.set('session',S.session);saveUsers();audit('sessions_revoked','@'+u.username,u.id);toast('نشست‌های دیگر بسته شد','ok')}
+  else if(act==='del-start'){$('#delArea').innerHTML='<div class="field"><label for="dPass">برای تأیید، رمز عبور را وارد کنید</label><input class="inp" id="dPass" type="password" dir="ltr" maxlength="64"></div><div class="err" id="dErr" role="alert"></div><div class="row"><button class="btn danger" type="button" data-act="del-go">حذف قطعی</button><button class="btn" type="button" data-act="del-no">انصراف</button></div>'}
+  else if(act==='del-no')drawAccount();
+  else if(act==='del-go'){
+    const er=$('#dErr');
+    if(!await verifyPw(u,$('#dPass').value)){er.textContent='رمز درست نیست.';failAttempt('del:'+u.id);return}
+    if(u.role==='admin'&&S.users.filter(x=>x.role==='admin'&&x.status==='active').length<2){er.textContent='این تنها ادمین فعال است؛ اول نقش یک نفر دیگر را به ادمین تغییر دهید.';return}
+    audit('account_delete','@'+u.username,u.id);S.users=S.users.filter(x=>x.id!==u.id);saveUsers();logout('حساب شما حذف شد','account_deleted');
+  }
+});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='lUser')drawLockInfo();
+  if(t.dataset&&t.dataset.pwm){
+    const un=(($('#rUser')||{}).value||(me()||{}).username||'');
+    const is=pwIssues(t.value,un),sc=t.value?pwScore(t.value):0,m=$('#'+t.id+'M'),h=$('#'+t.id+'H');
+    if(m)m.dataset.s=String(sc);
+    if(h)h.textContent=t.value?(is.length?'نیاز دارد: '+is.join('، '):['','ضعیف','متوسط','خوب','عالی'][sc||1]+' · رمز پذیرفته می‌شود'):'حداقل ۱۰ نویسه با حرف و عدد';
+  }
+});
+PS.idle={get:()=>idleMin,set:v=>{idleMin=v;store.set('idle',v);touch()}};
+PS.sessionInfo=()=>({idleMin,ABS_MS});
+})();
+/* ===== مدیریت کاربران (ادمین): تعریف، مسدودسازی، رمز موقت، اشتراک ===== */
+(function(){
+'use strict';
+const {$,$$,clean,esc,fa,money,toast,copyText,S,saveUsers,me,isAdmin,userById,openSheet,closeSheet,audit,reauth,hashPw,fmtDate,fmtDT,subState,newTrial,normalizeUser,uid,DAY,lockLeft,clearAttempt}=PS;
+const ROLE={admin:'ادمین',operator:'اپراتور'};
+const ST={trial:'آزمایشی',paid:'فعال',expired:'منقضی',admin:'ادمین'};
+let q='',roleF='all',delArm=null;
+const activeAdmins=()=>S.users.filter(x=>x.role==='admin'&&x.status==='active');
+
+function rowHTML(x){
+  const st=subState(x);
+  return '<div class="urow"><span class="av">'+esc(x.name.trim().charAt(0))+'</span><div style="min-width:0"><div><b>'+esc(x.name)+'</b> <span class="hint mono">@'+esc(x.username)+'</span></div><div class="row" style="gap:6px;margin-block:4px"><span class="pill '+(x.role==='admin'?'approved':'pending')+'">'+ROLE[x.role]+'</span>'
+   +(x.status!=='active'?'<span class="pill suspended">مسدود</span>':'')+'<span class="pill '+st.key+'">'+ST[st.key]+(st.key==='trial'||st.key==='paid'?' · '+fa(st.left)+' روز':'')+'</span>'+(x.totp.on?'<span class="pill approved">۲FA</span>':'')+'</div><div class="hint">آخرین ورود: '+(x.lastLogin?esc(fmtDT(x.lastLogin)):'هنوز وارد نشده')+'</div></div><button class="btn sm" type="button" data-um="'+x.id+'">مدیریت</button></div>';
+}
+function listHTML(){
+  const n=clean(q,40).toLowerCase();
+  const list=S.users.filter(x=>(roleF==='all'||x.role===roleF)&&(!n||x.name.toLowerCase().includes(n)||x.username.toLowerCase().includes(n)||x.email.toLowerCase().includes(n)));
+  return list.length?list.map(rowHTML).join(''):'<div class="empty"><b>کاربری پیدا نشد</b>جستجو یا فیلتر را تغییر دهید.</div>';
+}
+PS.adminPanel=function(){
+  if(!isAdmin())return '';
+  return '<div class="card" style="margin-top:14px" id="admBox"><div class="row" style="justify-content:space-between;margin-bottom:12px"><h3 style="font-size:17px">مدیریت کاربران <span class="hint">('+fa(S.users.length)+' نفر)</span></h3><button class="btn teal sm" type="button" id="uNew">تعریف کاربر جدید</button></div>'
+   +'<div class="row" style="margin-bottom:12px"><input class="inp" id="uSearch" placeholder="جستجوی نام، نام کاربری یا ایمیل" aria-label="جستجوی کاربر" value="'+esc(q)+'" style="flex:1;min-width:180px"><select class="inp" id="uRole" aria-label="فیلتر نقش" style="width:auto"><option value="all">همه‌ی نقش‌ها</option><option value="admin"'+(roleF==='admin'?' selected':'')+'>ادمین</option><option value="operator"'+(roleF==='operator'?' selected':'')+'>اپراتور</option></select></div>'
+   +'<div class="ulist" id="uList">'+listHTML()+'</div></div>';
+};
+function redraw(){const l=$('#uList');if(l)l.innerHTML=listHTML()}
+
+/* ---- مدیریت یک کاربر ---- */
+function openManage(id){
+  const t=userById(id);if(!t){closeSheet(true);return}
+  const self=t.id===me().id,st=subState(t);
+  const ov=openSheet('مدیریت: '+t.name,
+   '<div class="row" style="margin-bottom:12px;gap:6px"><span class="pill '+(t.role==='admin'?'approved':'pending')+'">'+ROLE[t.role]+'</span>'+(t.status!=='active'?'<span class="pill suspended">مسدود</span>':'<span class="pill approved">فعال</span>')+'<span class="pill '+st.key+'">'+ST[st.key]+(st.key==='trial'||st.key==='paid'?' · '+fa(st.left)+' روز':'')+'</span></div>'
+   +'<p class="hint mono" style="margin-bottom:14px;direction:ltr;text-align:right">@'+esc(t.username)+' · '+esc(t.email)+'</p>'
+   +(self?'<div class="callout" style="margin-bottom:12px">این حساب خودتان است؛ تغییر نقش و مسدودسازی برای خود غیرفعال است.</div>':'')
+   +'<div class="card" style="margin-bottom:12px"><div class="lbl" style="margin-bottom:8px">نقش</div><div class="row"><select class="inp" id="mRole" style="width:auto"'+(self?' disabled':'')+'><option value="operator"'+(t.role==='operator'?' selected':'')+'>اپراتور</option><option value="admin"'+(t.role==='admin'?' selected':'')+'>ادمین</option></select><button class="btn sm" type="button" data-ma="role"'+(self?' disabled':'')+'>ثبت نقش</button></div></div>'
+   +'<div class="card" style="margin-bottom:12px"><div class="lbl" style="margin-bottom:8px">اشتراک</div><div class="row"><select class="inp" id="mDays" style="width:auto"><option value="7">۷ روز</option><option value="14">۱۴ روز</option><option value="30" selected>۳۰ روز</option><option value="90">۹۰ روز</option><option value="365">۳۶۵ روز</option></select><button class="btn sm teal" type="button" data-ma="grant">افزودن مدت</button><button class="btn sm danger" type="button" data-ma="revoke"'+(t.role==='admin'?' disabled':'')+'>لغو اشتراک</button></div><p class="hint" style="margin-top:8px">'+(t.role==='admin'?'ادمین به اشتراک نیاز ندارد.':'افزودن مدت در صورتحساب با مبلغ صفر ثبت می‌شود.')+'</p></div>'
+   +'<div class="card" style="margin-bottom:12px"><div class="lbl" style="margin-bottom:8px">امنیت حساب</div><div class="row"><button class="btn sm" type="button" data-ma="reset">ساخت رمز موقت</button><button class="btn sm" type="button" data-ma="kill">بستن نشست‌ها</button>'+(t.totp.on?'<button class="btn sm" type="button" data-ma="tf">خاموش‌کردن ۲FA</button>':'')+'<button class="btn sm '+(t.status==='active'?'danger':'teal')+'" type="button" data-ma="status"'+(self?' disabled':'')+'>'+(t.status==='active'?'مسدودسازی':'رفع مسدودی')+'</button></div></div>'
+   +'<div class="row" style="justify-content:space-between"><button class="btn danger" type="button" data-ma="del"'+(self?' disabled':'')+'>حذف کاربر</button><button class="btn" type="button" data-close>بستن</button></div>');
+  ov.addEventListener('click',async e=>{
+    const b=e.target.closest('[data-ma]');if(!b||b.disabled)return;const k=b.dataset.ma;
+    if(k==='del'&&delArm!==t.id){delArm=t.id;b.textContent='حذف قطعی؟ دوباره بزنید';setTimeout(()=>{if(delArm===t.id){delArm=null;const bb=$('[data-ma=del]');bb&&(bb.textContent='حذف کاربر')}},4000);return}
+    const roleVal=$('#mRole',ov)?$('#mRole',ov).value:t.role,days=+($('#mDays',ov)||{value:30}).value;
+    if(!await reauth('این کار مدیریتی است؛ رمز خود را تأیید کنید.')){openManage(id);return}
+    const a=me(),tag='@'+t.username;
+    if(k==='role'){
+      if(roleVal===t.role){openManage(id);return}
+      if(t.role==='admin'&&activeAdmins().length<2){toast('باید دست‌کم یک ادمین فعال بماند','bad');openManage(id);return}
+      t.role=roleVal;if(roleVal==='operator'&&t.sub.plan==='admin')t.sub=newTrial(14);
+      t.sv=(t.sv||1)+1;saveUsers();audit('role_change',tag+' → '+roleVal,a.id);toast('نقش '+t.name+' به «'+ROLE[roleVal]+'» تغییر کرد','ok');
+    }else if(k==='status'){
+      if(t.status==='active'&&t.role==='admin'&&activeAdmins().length<2){toast('باید دست‌کم یک ادمین فعال بماند','bad');openManage(id);return}
+      t.status=t.status==='active'?'suspended':'active';t.sv=(t.sv||1)+1;saveUsers();audit(t.status==='active'?'user_unsuspend':'user_suspend',tag,a.id);toast(t.status==='active'?'مسدودی برداشته شد':'حساب مسدود شد','ok');
+    }else if(k==='reset'){
+      const temp=PS.genPw();Object.assign(t,await hashPw(temp));t.mustChange=true;t.sv=(t.sv||1)+1;clearAttempt(t.username.toLowerCase());saveUsers();audit('password_reset',tag,a.id);
+      const o2=openSheet('رمز موقت','<p class="hint" style="margin-bottom:10px">این رمز فقط همین یک بار نمایش داده می‌شود. کاربر در اولین ورود باید رمز جدید بگذارد.</p><div class="promptbox mono" style="max-height:none;user-select:all">'+esc(t.username)+'\n'+esc(temp)+'</div><div class="row" style="margin-top:12px"><button class="btn" type="button" id="tpCopy">کپی</button><button class="btn primary" type="button" data-close>بستن</button></div>');
+      $('#tpCopy',o2).onclick=()=>copyText(t.username+'\n'+temp,'اطلاعات ورود کپی شد');return;
+    }else if(k==='kill'){t.sv=(t.sv||1)+1;saveUsers();audit('sessions_revoked',tag,a.id);toast('نشست‌های کاربر بسته شد','ok')}
+    else if(k==='tf'){t.totp={on:false,secret:'',last:0,rec:[]};saveUsers();audit('2fa_reset',tag,a.id);toast('ورود دو مرحله‌ای کاربر خاموش شد','ok')}
+    else if(k==='grant'){
+      if(t.role==='admin'){toast('ادمین به اشتراک نیاز ندارد','bad');openManage(id);return}
+      const now=Date.now();t.sub.paidUntil=Math.max(now,t.sub.paidUntil||0)+days*DAY;t.sub.plan=days>=300?'year':'month';
+      t.sub.history.unshift({id:'ADM-'+fa(now).slice(-6),ts:now,plan:t.sub.plan,amount:0,status:'paid',ref:'admin',code:''});
+      saveUsers();audit('plan_grant',tag+' +'+days+'d',a.id);toast(fa(days)+' روز به اشتراک '+t.name+' اضافه شد','ok');
+    }else if(k==='revoke'){t.sub.paidUntil=0;t.sub.trialEnd=0;t.sub.autoRenew=false;saveUsers();audit('plan_revoke',tag,a.id);toast('اشتراک لغو شد','ok')}
+    else if(k==='del'){
+      if(t.role==='admin'&&activeAdmins().length<2){toast('باید دست‌کم یک ادمین فعال بماند','bad');openManage(id);return}
+      S.users=S.users.filter(x=>x.id!==t.id);saveUsers();audit('user_delete',tag,a.id);delArm=null;closeSheet(true);PS.refresh();toast('کاربر حذف شد','ok');return;
+    }
+    PS.refresh();openManage(id);
+  });
+}
+
+/* ---- تعریف کاربر جدید ---- */
+function openCreate(){
+  const ov=openSheet('تعریف کاربر جدید','<form id="ncF" novalidate>'+PS.field('ncName','نام و نام خانوادگی','text','maxlength="40"')+PS.field('ncUser','نام کاربری','text','dir="ltr" maxlength="20" autocomplete="off"')+PS.field('ncMail','ایمیل','email','dir="ltr" maxlength="60" autocomplete="off"')
+   +'<div class="grid2"><div class="field"><label for="ncRole">نقش</label><select class="inp" id="ncRole"><option value="operator">اپراتور</option><option value="admin">ادمین</option></select></div><div class="field"><label for="ncTrial">آزمایشی رایگان</label><select class="inp" id="ncTrial"><option value="14" selected>۱۴ روز</option><option value="30">۳۰ روز</option><option value="7">۷ روز</option><option value="0">بدون آزمایشی</option></select></div></div>'
+   +'<div class="field"><label for="ncPass">رمز موقت</label><div class="row"><input class="inp mono" id="ncPass" dir="ltr" readonly style="flex:1;min-width:0"><button class="btn sm" type="button" id="ncGen">تولید دوباره</button></div><div class="hint">کاربر در اولین ورود باید رمز را عوض کند.</div></div><div class="err" id="ncErr" role="alert"></div><div class="row"><button class="btn primary" type="submit">ساخت کاربر</button><button class="btn" type="button" data-close>انصراف</button></div></form>');
+  $('#ncPass',ov).value=PS.genPw();$('#ncGen',ov).onclick=()=>{$('#ncPass',ov).value=PS.genPw()};
+  $('#ncF',ov).addEventListener('submit',async e=>{
+    e.preventDefault();const E=m=>{$('#ncErr',ov).textContent=m};
+    const name=clean($('#ncName',ov).value,40),un=clean($('#ncUser',ov).value,20).toLowerCase(),mail=clean($('#ncMail',ov).value,60).toLowerCase();
+    if(name.length<2)return E('نام را وارد کنید.');
+    if(!/^[a-z0-9_]{3,20}$/.test(un))return E('نام کاربری باید ۳ تا ۲۰ نویسه‌ی انگلیسی، عدد یا _ باشد.');
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail))return E('ایمیل معتبر نیست.');
+    if(S.users.some(x=>x.username.toLowerCase()===un))return E('این نام کاربری قبلاً گرفته شده است.');
+    if(S.users.some(x=>x.email.toLowerCase()===mail))return E('این ایمیل قبلاً ثبت شده است.');
+    if(!await reauth('برای تعریف کاربر جدید رمز خود را تأیید کنید.'))return;
+    const temp=$('#ncPass',ov)?$('#ncPass',ov).value:PS.genPw();
+    const role=$('#ncRole',ov)?$('#ncRole',ov).value:'operator',days=+($('#ncTrial',ov)?$('#ncTrial',ov).value:14);
+    const h=await hashPw(temp);
+    const u=normalizeUser(Object.assign({id:'u-'+uid(),name,username:un,email:mail,role,bio:'',created:Date.now(),mustChange:true,sub:role==='admin'?undefined:newTrial(days)},h));
+    S.users.push(u);saveUsers();audit('user_create','@'+un+' '+role,me().id);PS.refresh();
+    const o2=openSheet('کاربر ساخته شد','<p class="hint" style="margin-bottom:10px">اطلاعات ورود را همین حالا برای کاربر بفرستید؛ رمز دوباره نمایش داده نمی‌شود.</p><div class="promptbox mono" style="max-height:none;user-select:all">'+esc(un)+'\n'+esc(temp)+'</div><div class="row" style="margin-top:12px"><button class="btn" type="button" id="ncCopy">کپی</button><button class="btn primary" type="button" data-close>بستن</button></div>');
+    $('#ncCopy',o2).onclick=()=>copyText(un+'\n'+temp,'اطلاعات ورود کپی شد');
+  });
+}
+$('#accBox').addEventListener('click',e=>{
+  if(e.target.id==='uNew'){openCreate();return}
+  const b=e.target.closest('[data-um]');if(b&&isAdmin())openManage(b.dataset.um);
+});
+$('#accBox').addEventListener('input',e=>{if(e.target.id==='uSearch'){q=e.target.value;redraw()}});
+$('#accBox').addEventListener('change',e=>{if(e.target.id==='uRole'){roleF=e.target.value;redraw()}});
+})();
+/* ===== امنیت: وضعیت، چک‌لیست، ممیزی، پشتیبان؛ راهنمای اندروید؛ ناوبری ===== */
+(function(){
+'use strict';
+const {$,$$,store,clean,esc,fa,toast,copyText,S,saveUsers,savePrompts,me,isAdmin,userById,openSheet,closeSheet,audit,verifyAudit,reauth,fmtDT,subState,verifyPw,rand,b64,unb64,att,lockLeft,uid}=PS;
+const E=PS.engine,te=new TextEncoder();
+
+/* ---- برچسب رویدادها ---- */
+const EV={login_ok:'ورود موفق',login_fail:'ورود ناموفق',login_blocked:'ورود حساب مسدود',logout:'خروج',idle_logout:'خروج بی‌فعالیتی',session_expired:'پایان نشست',session_revoked:'نشست بسته‌شده',session_blocked:'نشست مسدود',session_invalid:'نشست نامعتبر',register:'ثبت‌نام',password_change:'تغییر رمز',password_reset:'رمز موقت',role_change:'تغییر نقش',user_create:'تعریف کاربر',user_delete:'حذف کاربر',user_suspend:'مسدودسازی',user_unsuspend:'رفع مسدودی',plan_buy:'خرید اشتراک',payment_fail:'پرداخت ناموفق',plan_grant:'افزودن اشتراک',plan_revoke:'لغو اشتراک',trial_start:'شروع آزمایشی',autorenew:'تمدید خودکار','2fa_on':'فعال‌سازی ۲FA','2fa_off':'غیرفعال‌سازی ۲FA','2fa_fail':'کد ۲FA نادرست','2fa_regen':'کد بازیابی تازه','2fa_reset':'بازنشانی ۲FA','2fa_recovery_used':'مصرف کد بازیابی',sessions_revoked:'بستن نشست‌ها',account_delete:'حذف حساب',profile_edit:'ویرایش پروفایل',hash_upgrade:'ارتقای هش رمز',reauth_fail:'تأیید هویت ناموفق',backup_export:'پشتیبان‌گیری',backup_import:'بازیابی پشتیبان'};
+const BAD=new Set(['login_fail','login_blocked','2fa_fail','reauth_fail','payment_fail','session_revoked']);
+
+/* ---- وضعیت زنده ---- */
+let chain=null, demoBad=null, demoKey='';
+async function checkChain(){chain=await verifyAudit();drawStatus();drawList()}
+async function checkDemo(){
+  const key=S.users.map(u=>u.id+u.pass).join('|');if(key===demoKey)return;demoKey=key;
+  const bad=[];
+  for(const u of S.users){const dp=u.username==='sara'?'Sara@1234':u.username==='reza'?'Reza@1234':null;if(dp&&await verifyPw(u,dp))bad.push(u.username)}
+  demoBad=bad;drawList();
+}
+function drawStatus(){
+  const box=$('#secStatus');if(!box)return;const u=me(),a=att();
+  const fails=Object.values(a).reduce((s,r)=>s+(r.total||0),0),locks=Object.values(a).filter(r=>r.until>Date.now()).length;
+  const idle=PS.idle.get();
+  box.innerHTML='<h3 style="font-size:17px;margin-bottom:12px">وضعیت زنده</h3><div class="stats" style="margin-bottom:14px">'
+   +'<div class="stat"><b>'+(u?'فعال':'بدون نشست')+'</b><span>نشست</span></div>'
+   +'<div class="stat"><b class="mono" id="idleLeft">'+(u?'':'—')+'</b><span>تا خروج خودکار</span></div>'
+   +'<div class="stat"><b>'+fa(fails)+'</b><span>ورود ناموفق ثبت‌شده</span></div>'
+   +'<div class="stat"><b>'+fa(locks)+'</b><span>قفل فعال</span></div>'
+   +'<div class="stat"><b>'+(chain?(chain.ok?'سالم':'مخدوش'):'…')+'</b><span>زنجیره‌ی ممیزی</span></div>'
+   +'<div class="stat"><b>'+(u?(u.totp.on?'فعال':'خاموش'):'—')+'</b><span>۲FA حساب شما</span></div></div>'
+   +'<div class="field"><label for="idleSel">مدت بی‌فعالیت تا خروج</label><select class="inp" id="idleSel">'+[2,5,15,30].map(m=>'<option value="'+m+'"'+(m===idle?' selected':'')+'>'+fa(m)+' دقیقه</option>').join('')+'</select></div><p class="hint">سقف عمر هر نشست ۸ ساعت است، حتی با فعالیت مداوم.</p>';
+}
+$('#secStatus').addEventListener('change',e=>{if(e.target.id==='idleSel'){PS.idle.set(+e.target.value);toast('مدت خروج خودکار به '+fa(PS.idle.get())+' دقیقه تغییر کرد','ok')}});
+
+/* ---- چک‌لیست ---- */
+const CHECKS=[
+  {id:'san',t:'پاک‌سازی ورودی‌ها',d:'تگ، اسکریپت، رویدادهای درون‌خطی و کاراکترهای کنترلی از همه‌ی فیلدها حذف می‌شود.',auto:()=>PS.clean('<script>x<\/script>a')==='a'},
+  {id:'esc',t:'نمایش امن متن‌ها',d:'متن‌های کاربر قبل از نمایش escape می‌شوند.',auto:()=>PS.esc('<b>')==='&lt;b&gt;'},
+  {id:'kdf',t:'رمزها با PBKDF2 و نمک تصادفی ذخیره می‌شوند',d:'۱۵۰ هزار تکرار SHA-256. حساب‌های قدیمی در اولین ورود ارتقا می‌یابند.',auto:()=>S.users.every(u=>u.v===2)},
+  {id:'pol',t:'سیاست رمز قوی',d:'حداقل ۱۰ نویسه، حرف و عدد، بدون رمزهای رایج و بدون نام کاربری.',auto:()=>typeof PS.pwIssues==='function'},
+  {id:'lock',t:'قفل تصاعدی ورود',d:'بعد از ۵ تلاش ناموفق قفل می‌شود و مدت آن با هر بار دو برابر می‌شود (تا ۱۵ دقیقه). یک سقف کلی هم برای همه‌ی حساب‌ها هست.',auto:()=>typeof PS.failAttempt==='function'},
+  {id:'sess',t:'نشست محدود',d:'خروج بعد از بی‌فعالیتی، سقف ۸ ساعت و باطل‌شدن نشست با تغییر رمز یا مسدودسازی.',auto:()=>PS.idle.get()>0},
+  {id:'tf',t:'ورود دو مرحله‌ای برای همه‌ی ادمین‌ها',d:'هر ادمین فعال باید ۲FA را در بخش حساب کاربری روشن کند.',auto:()=>S.users.filter(u=>u.role==='admin'&&u.status==='active').every(u=>u.totp.on)},
+  {id:'demo',t:'رمز پیش‌فرض حساب‌های نمونه عوض شده است',d:'sara و reza با رمز نمایشی ساخته شده‌اند. پیش از انتشار عمومی رمزشان را عوض یا حساب‌ها را حذف کنید.',auto:()=>demoBad===null?null:demoBad.length===0},
+  {id:'audit',t:'گزارش رویدادها سالم است',d:'هر رویداد به هش رویداد قبلی وصل است و دست‌کاری آشکار می‌شود.',auto:()=>chain===null?null:chain.ok},
+  {id:'csp',t:'خروجی‌های ساخته‌شده سیاست CSP دارند',d:'برنامه‌های تولیدشده فقط اسکریپت درون‌خطی خودشان را اجرا می‌کنند و به شبکه وصل نمی‌شوند.',auto:()=>true},
+  {id:'sri',t:'کتابخانه‌ی بیرونی با SRI بارگذاری می‌شود',d:'JSZip با هش یکپارچگی و نسخه‌ی ثابت لود می‌شود.',auto:()=>!!document.querySelector('script[src*="jszip"][integrity]')},
+  {id:'https',t:'انتشار فقط روی HTTPS',d:'در GitHub Pages گزینه‌ی Enforce HTTPS را روشن کنید.'},
+  {id:'gh2fa',t:'ورود دو مرحله‌ای روی حساب GitHub روشن است',d:'Settings > Password and authentication.'},
+  {id:'branch',t:'قفل شاخه‌ی main (Branch protection)',d:'ادغام مستقیم بدون بازبینی ممنوع شود.'},
+  {id:'scan',t:'Secret scanning و Dependabot فعال است',d:'Settings > Code security. اگر کلیدی به‌اشتباه commit شود، هشدار می‌گیرید.'},
+  {id:'ks',t:'keystore اندروید فقط در Secrets است',d:'فایل jks و رمزها در مخزن نباشند؛ فقط در Actions secrets.'},
+  {id:'server',t:'احراز هویت سمت سرور اضافه شده است',d:'برای تیم واقعی، ورود، نقش‌ها و پرداخت باید روی سرور بررسی شوند. نسخه‌ی کنونی فقط در مرورگر کار می‌کند.'},
+  {id:'headers',t:'سربرگ‌های امنیتی روی هاست تنظیم شده',d:'GitHub Pages سربرگ سفارشی نمی‌دهد. برای CSP کامل و frame-ancestors از Cloudflare یا هاست دیگر استفاده کنید.'},
+  {id:'backup',t:'پشتیبان رمزگذاری‌شده گرفته شده است',d:'localStorage با پاک‌شدن مرورگر از بین می‌رود.'}
+];
+function drawList(){
+  const man=store.get('sec',{});let ok=0;const ul=$('#secList');if(!ul)return;
+  ul.innerHTML=CHECKS.map(c=>{
+    const auto=!!c.auto,v=auto?c.auto():null,on=auto?v===true:!!man[c.id];if(on)ok++;
+    const badge=auto?(v===null?'<span class="auto">در حال بررسی</span>':'<span class="auto'+(v?'':' no')+'">'+(v?'خودکار':'نیازمند اقدام')+'</span>'):'<span></span>';
+    return '<li><input type="checkbox" id="ck_'+c.id+'" '+(on?'checked ':'')+(auto?'disabled ':'')+'data-ck="'+c.id+'"><label for="ck_'+c.id+'"><b>'+esc(c.t)+'</b><small>'+esc(c.d)+'</small></label>'+badge+'</li>'}).join('');
+  $('#secScore').textContent=fa(ok)+' از '+fa(CHECKS.length)+' مورد تکمیل است';
+  $('#secBar').style.width=Math.round(ok/CHECKS.length*100)+'%';
+}
+$('#secList').addEventListener('change',e=>{const c=e.target.dataset.ck;if(!c)return;const m=store.get('sec',{});m[c]=e.target.checked;store.set('sec',m);drawList()});
+
+/* ---- ممیزی ---- */
+function drawAudit(){
+  const box=$('#auditBox');if(!box)return;
+  if(!isAdmin()){box.innerHTML='<h3 style="font-size:17px;margin-bottom:6px">گزارش رویدادهای امنیتی</h3><div class="empty"><b>فقط ادمین</b>برای دیدن گزارش با حساب ادمین وارد شوید.</div>';return}
+  const a=store.get('audit',{base:'0',entries:[]}),rows=a.entries.slice(-30).reverse();
+  box.innerHTML='<div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="font-size:17px">گزارش رویدادهای امنیتی</h3><div class="row"><button class="btn sm" type="button" id="audVerify">بررسی زنجیره</button><button class="btn sm" type="button" id="audExport">خروجی JSON</button></div></div>'
+   +'<p class="hint" style="margin-bottom:10px">'+fa(a.entries.length)+' رویداد ثبت شده. هر ردیف به هش ردیف قبلی وصل است.</p>'
+   +'<div class="aud">'+(rows.length?rows.map(e=>{const au=userById(e.actor);return '<div class="'+(BAD.has(e.type)?'bad':'')+'"><span class="hint">'+esc(fmtDT(e.ts))+'</span><span><b>'+esc(EV[e.type]||e.type)+'</b> · '+esc(au?au.name:(e.actor==='-'?'ناشناس':e.actor))+(e.detail?' · <span class="mono">'+esc(e.detail)+'</span>':'')+'</span></div>'}).join(''):'<div class="empty"><b>هنوز رویدادی نیست</b>ورود و خروج‌ها اینجا ثبت می‌شوند.</div>')+'</div>';
+}
+PS.onAudit=()=>{drawAudit();checkChain()};
+$('#auditBox').addEventListener('click',async e=>{
+  if(e.target.id==='audVerify'){const r=await verifyAudit();chain=r;drawStatus();drawList();toast(r.ok?'زنجیره سالم است ('+fa(r.total)+' رویداد)':'ردیف '+fa(r.at+1)+' دست‌کاری شده است',r.ok?'ok':'bad')}
+  if(e.target.id==='audExport'){const a=store.get('audit',{base:'0',entries:[]});PS.offerFile('promptsaz-audit.json',JSON.stringify(a,null,2))}
+});
+
+/* ---- پشتیبان رمزگذاری‌شده ---- */
+async function aesKey(pass,salt,iter,usage){
+  const k=await crypto.subtle.importKey('raw',te.encode(pass),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',hash:'SHA-256',salt,iterations:iter},k,{name:'AES-GCM',length:256},false,usage);
+}
+async function encryptBackup(obj,pass){
+  const salt=rand(16),iv=rand(12),iter=200000,key=await aesKey(pass,salt,iter,['encrypt']);
+  const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,te.encode(JSON.stringify(obj)));
+  return JSON.stringify({app:'promptsaz',v:1,iter,salt:b64(salt),iv:b64(iv),ct:b64(ct)});
+}
+async function decryptBackup(text,pass){
+  let w;try{w=JSON.parse(text)}catch(e){throw new Error('فایل پشتیبان معتبر نیست.')}
+  if(!w||w.app!=='promptsaz'||w.v!==1||typeof w.ct!=='string'||typeof w.salt!=='string'||typeof w.iv!=='string'||!(w.iter>=100000&&w.iter<=2000000))throw new Error('ساختار فایل پشتیبان درست نیست.');
+  try{const key=await aesKey(pass,unb64(w.salt),w.iter,['decrypt']);return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(w.iv)},key,unb64(w.ct))))}
+  catch(e){throw new Error('رمز پشتیبان نادرست است یا فایل آسیب دیده است.')}
+}
+const num=(v,d)=>Number.isFinite(+v)?+v:d;
+const strs=(a,n,m)=>Array.isArray(a)?a.slice(0,n).map(x=>clean(x,m||120)).filter(Boolean):[];
+function cleanUser(u){
+  if(!u||typeof u!=='object')return null;
+  const id=String(u.id||''),un=String(u.username||'').toLowerCase(),em=String(u.email||'').toLowerCase();
+  if(!/^[\w-]{2,40}$/.test(id)||!/^[a-z0-9_]{3,20}$/.test(un)||!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em))return null;
+  if(typeof u.salt!=='string'||typeof u.pass!=='string'||u.salt.length>64||u.pass.length>128)return null;
+  const s=u.sub||{},t=u.totp||{};
+  return PS.normalizeUser({id,name:clean(u.name,40)||un,username:un,email:em,role:u.role==='admin'?'admin':'operator',status:u.status==='suspended'?'suspended':'active',bio:clean(u.bio,120),created:num(u.created,Date.now()),lastLogin:num(u.lastLogin,0),salt:u.salt,pass:u.pass,v:u.v===2?2:1,sv:Math.max(1,num(u.sv,1)),mustChange:!!u.mustChange,
+    totp:{on:!!t.on&&/^[A-Z2-7]{32}$/.test(String(t.secret||'')),secret:/^[A-Z2-7]{32}$/.test(String(t.secret||''))?t.secret:'',last:num(t.last,0),rec:Array.isArray(t.rec)?t.rec.filter(x=>/^[0-9a-f]{64}$/.test(x)).slice(0,10):[]},
+    sub:{plan:['trial','month','year','admin','none'].includes(s.plan)?s.plan:'trial',trialStart:num(s.trialStart,0),trialEnd:num(s.trialEnd,0),trialUsed:!!s.trialUsed,paidUntil:num(s.paidUntil,0),autoRenew:!!s.autoRenew,
+      coupons:strs(s.coupons,10,20),history:(Array.isArray(s.history)?s.history.slice(0,60):[]).map(i=>({id:clean(i&&i.id,30),ts:num(i&&i.ts,0),plan:['trial','month','year'].includes(i&&i.plan)?i.plan:'month',amount:Math.max(0,num(i&&i.amount,0)),status:i&&i.status==='paid'?'paid':'failed',ref:clean(i&&i.ref,20),code:clean(i&&i.code,20)}))}});
+}
+function cleanPrompt(p){
+  if(!p||typeof p!=='object'||!p.spec||typeof p.spec!=='object')return null;
+  const sp=p.spec,id=String(p.id||'');if(!/^[\w-]{2,40}$/.test(id)||!E.TYPES[sp.type])return null;
+  const sid=sp.style&&E.STYLES[sp.style.id]?sp.style.id:'indigo';
+  return {id,status:['pending','approved','rejected'].includes(p.status)?p.status:'pending',author:String(p.author||'').slice(0,40),created:num(p.created,Date.now()),updated:num(p.updated,Date.now()),note:clean(p.note,200),
+    spec:{title:clean(sp.title,60)||'بدون عنوان',idea:clean(sp.idea,800),type:sp.type,keywords:(Array.isArray(sp.keywords)?sp.keywords.slice(0,12):[]).map(k=>({id:clean(k&&k.id,30),label:clean(k&&k.label,40)})).filter(k=>k.label),extras:strs(sp.extras,6,40),
+      goal:clean(sp.goal,1200),audience:clean(sp.audience,300),pages:strs(sp.pages,8,90),features:strs(sp.features,10,120),style:Object.assign({},E.STYLES[sid]),tech:strs(sp.tech,6,160),action:clean(sp.action,40)||'انجام کار اصلی',
+      items:(Array.isArray(sp.items)?sp.items.slice(0,6):[]).map(i=>Array.isArray(i)?[clean(i[0],60),clean(i[1],60)]:null).filter(Boolean)}};
+}
+PS.backup={encrypt:encryptBackup,decrypt:decryptBackup,cleanUser,cleanPrompt};
+function drawBackup(){
+  const box=$('#backupBox');if(!box)return;
+  if(!isAdmin()){box.innerHTML='<h3 style="font-size:17px;margin-bottom:6px">پشتیبان رمزگذاری‌شده</h3><div class="empty"><b>فقط ادمین</b>برای پشتیبان‌گیری و بازیابی با حساب ادمین وارد شوید.</div>';return}
+  box.innerHTML='<h3 style="font-size:17px;margin-bottom:6px">پشتیبان رمزگذاری‌شده</h3><p class="hint" style="margin-bottom:12px">کاربران و پرامپت‌ها با AES-256-GCM و کلید PBKDF2 از رمز شما رمزگذاری می‌شوند. رمز پشتیبان را گم نکنید؛ قابل بازیابی نیست.</p>'
+   +'<div class="field"><label for="bkPass">رمز پشتیبان (حداقل ۱۲ نویسه)</label><input class="inp" id="bkPass" type="password" dir="ltr" maxlength="64" autocomplete="off"></div><div class="row" style="margin-bottom:14px"><button class="btn primary" type="button" id="bkExport">ساخت پشتیبان</button></div>'
+   +'<div class="field"><label for="bkFile">بازیابی از فایل</label><input class="inp" id="bkFile" type="file" accept=".json,application/json"></div><div class="err" id="bkErr" role="alert"></div><button class="btn danger" type="button" id="bkImport">بازیابی و جایگزینی داده‌ها</button>';
+}
+$('#backupBox').addEventListener('click',async e=>{
+  const err=m=>{const x=$('#bkErr');if(x)x.textContent=m||''};
+  if(e.target.id==='bkExport'){
+    const pass=$('#bkPass').value;if(pass.length<12){err('رمز پشتیبان باید دست‌کم ۱۲ نویسه باشد.');return}err('');
+    if(!await reauth('برای ساخت پشتیبان رمز خود را تأیید کنید.'))return;
+    const text=await encryptBackup({users:S.users,prompts:S.prompts,exportedAt:Date.now()},pass);
+    audit('backup_export','users '+S.users.length+' prompts '+S.prompts.length);PS.offerFile('promptsaz-backup-'+new Date().toISOString().slice(0,10)+'.json',text);
+  }
+  if(e.target.id==='bkImport'){
+    const f=$('#bkFile').files[0],pass=$('#bkPass').value;
+    if(!f){err('فایل پشتیبان را انتخاب کنید.');return}if(f.size>4e6){err('فایل خیلی بزرگ است.');return}if(!pass){err('رمز پشتیبان را در کادر بالا وارد کنید.');return}err('');
+    let obj;try{obj=await decryptBackup(await f.text(),pass)}catch(x){err(x.message);return}
+    const users=(Array.isArray(obj.users)?obj.users.slice(0,500):[]).map(cleanUser).filter(Boolean),prompts=(Array.isArray(obj.prompts)?obj.prompts.slice(0,1000):[]).map(cleanPrompt).filter(Boolean);
+    const ids=new Set();const uniq=users.filter(u=>!ids.has(u.id)&&ids.add(u.id));
+    if(!uniq.some(u=>u.role==='admin'&&u.status==='active')){err('پشتیبان هیچ ادمین فعالی ندارد و رد شد.');return}
+    const ov=openSheet('تأیید بازیابی','<p style="margin-bottom:10px">'+fa(uniq.length)+' کاربر و '+fa(prompts.length)+' پرامپت جایگزین داده‌های فعلی می‌شود و بعد از آن باید دوباره وارد شوید.</p><div class="row"><button class="btn danger" type="button" id="bkGo">جایگزین کن</button><button class="btn" type="button" data-close>انصراف</button></div>');
+    $('#bkGo',ov).onclick=async()=>{
+      if(!await reauth('بازیابی همه‌ی داده‌ها را با رمز خود تأیید کنید.'))return;
+      S.users=uniq;S.prompts=prompts;saveUsers();savePrompts();await audit('backup_import','users '+uniq.length+' prompts '+prompts.length);
+      PS.logout('بازیابی انجام شد؛ دوباره وارد شوید','backup_import_logout');
+    };
+  }
+});
+
+/* ---- راهنمای اندروید و پروژه‌ی خود پرامپت‌ساز ---- */
+function drawGuide(){
+  const wf=$('#wfBox');if(!wf||!PS.build)return;
+  wf.innerHTML='<div class="code"><button type="button" id="wfCopy">کپی</button><pre></pre></div>';
+  $('pre',wf).textContent=PS.build.ANDROID_WORKFLOW;$('#wfCopy').onclick=()=>copyText(PS.build.ANDROID_WORKFLOW,'گردش‌کار کپی شد');
+}
+document.addEventListener('click',async e=>{
+  if(e.target.id!=='apkGen')return;
+  const url=($('#apkUrl').value||'').trim(),er=$('#apkErr');let ok=false;
+  try{const u=new URL(url);ok=u.protocol==='https:'&&/^[a-z0-9.-]+$/i.test(u.hostname)&&u.hostname.includes('.')}catch(x){}
+  if(!ok){er.textContent='آدرس باید با https:// شروع شود و یک دامنه‌ی معتبر باشد.';return}er.textContent='';
+  await PS.build.offerZip('promptsaz-android.zip',PS.build.androidFiles({title:'پرامپت‌ساز',style:E.STYLES.indigo},'',{url}));
+});
+
+/* ---- ناوبری، تم، کپی ---- */
+document.addEventListener('click',e=>{const c=e.target.closest('[data-copy]');if(c)copyText(c.dataset.copy,'دستور کپی شد')});
+function applyTheme(t){if(t)document.documentElement.setAttribute('data-theme',t);else document.documentElement.removeAttribute('data-theme')}
+applyTheme(store.get('theme',null));
+$('#themeBtn').onclick=()=>{
+  const cur=document.documentElement.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');
+  const n=cur==='dark'?'light':'dark';applyTheme(n);store.set('theme',n)};
+if('IntersectionObserver' in window){
+  const links=$$('#nav a'),io=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){links.forEach(a=>a.classList.toggle('on',a.dataset.s===en.target.id));
+    const on=$('#nav a.on');if(on&&on.scrollIntoView)on.scrollIntoView({inline:'center',block:'nearest'})}})},{rootMargin:'-30% 0px -60% 0px'});
+  $$('main section[id]').forEach(s=>io.observe(s));
+}
+$('#sanIn').addEventListener('input',()=>{$('#sanOut').textContent=clean($('#sanIn').value,500)||'(خالی)'});
+$('#sanOut').textContent=clean($('#sanIn').value,500)||'(خالی)';
+
+PS.drawSecurity=()=>{drawStatus();drawList();drawAudit();drawBackup();checkChain();checkDemo()};
+drawGuide();
+PS.refresh();
+if(!PS.cryptoOK)toast('این مرورگر رمزنگاری امن ندارد؛ ورود و ثبت‌نام کار نمی‌کند. صفحه را روی HTTPS باز کنید.','bad');
+})();
+</script>
