@@ -266,6 +266,26 @@ textarea.inp{min-height:132px;resize:vertical;line-height:1.9}
 .aud .mono{font-size:12px;color:var(--muted)}
 .check .auto.no{color:var(--bad);border-color:var(--bad)}
 .hl{font-size:clamp(18px,4.4vw,22px);margin:30px 0 12px}
+/* support bot */
+#botRoot{position:fixed;inset-inline-start:0;bottom:0;z-index:70;pointer-events:none}
+#botRoot>*{pointer-events:auto}
+.botfab{position:fixed;inset-inline-start:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:54px;height:54px;border-radius:50%;border:0;background:var(--teal);color:var(--on-accent);display:grid;place-items:center;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.35);transition:transform .15s}
+.botfab:active{transform:scale(.94)}
+.dot2{position:absolute;top:2px;inset-inline-end:2px;width:13px;height:13px;border-radius:50%;background:var(--bad);border:2px solid var(--bg)}
+.botpanel{position:fixed;inset-inline-start:max(12px,env(safe-area-inset-left,0px));inset-inline-end:max(12px,env(safe-area-inset-right,0px));bottom:calc(80px + env(safe-area-inset-bottom,0px));max-width:400px;height:min(540px,calc(100dvh - 120px - env(safe-area-inset-bottom,0px)));display:flex;flex-direction:column;background:var(--bg2);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;animation:up .3s cubic-bezier(.2,.8,.2,1) both}
+.bothd{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--surface)}
+.botmsgs{flex:1;min-height:0;overflow:auto;padding:14px;display:grid;gap:10px;align-content:start}
+.bm{max-width:88%;padding:9px 14px;border-radius:16px;font-size:14px;line-height:1.85;background:var(--surface);border:1px solid var(--line);animation:rise .3s both}
+.bm.me{justify-self:end;background:var(--indigo);color:var(--on-accent);border-color:transparent}
+.bm .bl{margin-top:8px}
+.bm.typing{display:flex;gap:5px;width:max-content;padding:12px 16px}
+.bm.typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:blink 1s infinite}
+.bm.typing i:nth-child(2){animation-delay:.15s}.bm.typing i:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.botin{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);background:var(--surface)}
+.botin .inp{min-height:42px;flex:1;min-width:0}
+.tk{border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:8px;background:var(--surface);font-size:13.5px}
+.tkr{background:color-mix(in srgb,var(--teal) 12%,transparent);border-radius:10px;padding:6px 10px;font-size:13px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
 <div id="app" dir="rtl" lang="fa">
@@ -469,6 +489,7 @@ base64 -w0 release.jks</pre></div>
   <div>داده‌ها فقط در مرورگر همین دستگاه می‌مانند. خروجی‌های ساخته‌شده پروژه‌ی آماده‌ی اجرا هستند، نه فایل نصبی کامپایل‌شده.</div>
 </footer>
 <div id="ovMount"></div>
+<div id="botRoot"></div>
 <div class="toasts" id="toasts" role="status"></div>
 </div>
 <script>
@@ -538,7 +559,16 @@ async function copyText(text,okMsg){
   toast(ok?(okMsg||'کپی شد'):'کپی خودکار ممکن نشد؛ متن را انتخاب و دستی کپی کنید',ok?'ok':'bad');return ok;
 }
 async function saveFile(filename,data){
-  let dl=null;try{dl=await window.claude.use('downloads')}catch(e){}
+  let dl=null;try{if(window.claude&&window.claude.use)dl=await window.claude.use('downloads')}catch(e){}
+  if(!dl&&!window.claude){
+    /* مرورگر معمولی (GitHub Pages یا فایل محلی): دانلود مستقیم */
+    try{
+      const blob=data instanceof Blob?data:new Blob([data],{type:'text/plain;charset=utf-8'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.rel='noopener';
+      document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
+      toast('دانلود شروع شد: '+filename,'ok');return {ok:true};
+    }catch(e){return {fallback:true}}
+  }
   if(!dl){return {fallback:true}}
   try{await dl.save({filename,data});toast('فایل ذخیره شد: '+filename,'ok');return {ok:true}}
   catch(e){if(e&&e.code==='declined'){toast('ذخیره لغو شد');return {ok:false}}
@@ -1518,11 +1548,11 @@ function loggedInHTML(u){
 function drawAccount(){
   const box=$('#accBox'),u=me();if(!box)return;
   if(!u){box.innerHTML='<div class="grid2">'+loggedOutHTML()+'</div>';drawLockInfo();return}
-  box.innerHTML='<div class="grid2">'+loggedInHTML(u)+'</div>'+(PS.adminPanel?PS.adminPanel():'');
+  box.innerHTML='<div class="grid2">'+loggedInHTML(u)+'</div>'+(PS.adminPanel?PS.adminPanel():'')+(PS.ticketPanel?PS.ticketPanel():'');
 }
 function refresh(){
   drawWho();drawAccount();
-  PS.drawChip&&PS.drawChip();PS.drawPlans&&PS.drawPlans();PS.drawSecurity&&PS.drawSecurity();PS.drawQueue&&PS.drawQueue();
+  PS.drawChip&&PS.drawChip();PS.drawPlans&&PS.drawPlans();PS.drawSecurity&&PS.drawSecurity();PS.drawQueue&&PS.drawQueue();PS.drawBot&&PS.drawBot();
 }
 PS.refresh=refresh;PS.drawAccount=drawAccount;
 
@@ -1786,6 +1816,154 @@ $('#accBox').addEventListener('click',e=>{
 $('#accBox').addEventListener('input',e=>{if(e.target.id==='uSearch'){q=e.target.value;redraw()}});
 $('#accBox').addEventListener('change',e=>{if(e.target.id==='uRole'){roleF=e.target.value;redraw()}});
 })();
+/* ===== ربات پشتیبانی: پاسخ آماده، آگاه از وضعیت کاربر، و تیکت برای ادمین ===== */
+(function(){
+'use strict';
+const {$,$$,store,clean,esc,fa,money,toast,S,me,isAdmin,userById,audit,uid,fmtDT,subState,PLANS}=PS;
+const root=$('#botRoot');
+let open=false,view='chat',busy=false;
+
+/* ---- نرمال‌سازی برای تطبیق ---- */
+const nz=s=>String(s||'').replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/ي/g,'ی').replace(/ك/g,'ک').replace(/[‌ً-ٟ]/g,' ').replace(/[.!؟?،,؛:]/g,' ').replace(/\s+/g,' ').toLowerCase().trim();
+
+/* ---- پایگاه پاسخ‌ها ---- */
+function trialAns(){
+  const u=me();
+  if(!u)return 'هر حساب جدید ۱۴ روز دسترسی کامل و رایگان می‌گیرد و نیازی به ثبت کارت نیست. از بخش حساب کاربری ثبت‌نام کنید تا شمارش شروع شود.';
+  const st=subState(u);
+  if(st.key==='admin')return 'حساب شما ادمین است و محدودیت زمانی ندارد.';
+  if(st.key==='trial')return 'دوره‌ی آزمایشی شما فعال است و '+fa(st.left)+' روز تا پایانش باقی مانده. تا آن موقع همه‌ی امکانات را دارید.';
+  if(st.key==='paid')return 'اشتراک شما فعال است و '+fa(st.left)+' روز دیگر اعتبار دارد.';
+  return u.sub.trialUsed?'دوره‌ی آزمایشی شما تمام شده و هر حساب فقط یک بار آن را می‌گیرد. برای ادامه یکی از طرح‌های پولی را تهیه کنید.':'می‌توانید ۱۴ روز آزمایشی را از بخش اشتراک شروع کنید.';
+}
+const KB=[
+  {k:['سلام','درود','وقت بخیر','صبح بخیر','عصر بخیر','hello','hi'],a:()=>'سلام! من دستیار پشتیبانی پرامپت‌ساز هستم. درباره‌ی اشتراک، حساب، ساخت خروجی یا انتشار در GitHub بپرسید.'},
+  {k:['ممنون','مرسی','تشکر','سپاس','دستت درد'],a:()=>'خواهش می‌کنم. اگر سؤال دیگری دارید بپرسید.'},
+  {k:['آزمایشی','رایگان','دو هفته','۱۴ روز','14 روز','trial','مجانی'],a:trialAns,link:['رفتن به اشتراک','#plans']},
+  {k:['قیمت','هزینه','تعرفه','طرح','ماهانه','سالانه','تخفیف','کد تخفیف','خرید','بخرم','اشتراک','پرداخت'],a:()=>'طرح ماهانه '+money(PLANS.month.price)+' تومان و طرح سالانه '+money(PLANS.year.price)+' تومان است (سالانه معادل ۲ ماه رایگان). کد نمونه‌ی WELCOME20 بیست درصد تخفیف می‌دهد. پرداخت در این نسخه شبیه‌سازی است و مبلغی کسر نمی‌شود.',link:['خرید اشتراک','#plans']},
+  {k:['منقضی','تمام شد','تموم شد','قفل شده','نمی تونم تایید','نمیتونم تایید','ساخت خروجی نمیشه','ساخت خروجی غیرفعال'],a:()=>{const u=me();return u&&subState(u).active?'اشتراک شما فعال است. اگر دکمه‌ای غیرفعال است، پرامپت باید ابتدا «تأییدشده» باشد و فقط ادمین یا سازنده‌ی پرامپت می‌تواند آن را تأیید کند.':'بعد از پایان اشتراک، تأیید پرامپت، ارسال به صف و ساخت خروجی قفل می‌شود. دیدن پرامپت‌ها و گرفتن TXT و JSON آزاد می‌ماند. با تهیه‌ی اشتراک همه چیز دوباره باز می‌شود.'},link:['اشتراک','#plans']},
+  {k:['فراموش','رمز','پسورد','گذرواژه','رمز موقت','تغییر رمز','رمزم'],a:()=>'اگر رمز را فراموش کرده‌اید، ادمین می‌تواند از «حساب کاربری > مدیریت کاربران» رمز موقت بسازد و شما در اولین ورود رمز جدید می‌گذارید. برای تغییر رمز عادی، بعد از ورود از بخش «تغییر رمز عبور» استفاده کنید. رمز جدید حداقل ۱۰ نویسه با حرف و عدد باشد.',link:['حساب کاربری','#account']},
+  {k:['۲fa','2fa','دو مرحله','دومرحله','authenticator','اتنتیکیتور','کد بازیابی','گوگل اتنتیکیتور','کد 6 رقمی'],a:()=>'ورود دو مرحله‌ای را از «حساب کاربری > ورود دو مرحله‌ای > فعال‌سازی» روشن کنید. کلید را در برنامه‌ی Authenticator وارد کنید و کد ۶ رقمی را بزنید. بعد از فعال‌سازی ۸ کد بازیابی می‌گیرید؛ جای امن نگه دارید. اگر گوشی را گم کردید، ادمین هم می‌تواند ۲FA حساب شما را خاموش کند.',link:['حساب کاربری','#account']},
+  {k:['قفل ورود','ورود قفل','وارد نمیشم','وارد نمی شم','وارد نمیشه','نمیتونم وارد','نمی تونم وارد','تلاش ناموفق','مسدود','بلاک'],a:()=>'بعد از ۵ تلاش ناموفق، ورود یک دقیقه قفل می‌شود و با هر قفل مدتش دو برابر می‌شود (حداکثر ۱۵ دقیقه). کمی صبر کنید و با رمز درست امتحان کنید. اگر پیام «حساب مسدود است» دیدید، ادمین باید مسدودی را بردارد.'},
+  {k:['ثبت نام','ثبتنام','حساب بسازم','حساب جدید','عضویت','ورود'],a:()=>'از بخش «حساب کاربری» تب «ثبت‌نام» را بزنید، نام، نام کاربری انگلیسی، ایمیل و یک رمز قوی بدهید. حساب شما با نقش اپراتور و ۱۴ روز رایگان ساخته می‌شود.',link:['ثبت‌نام','#account']},
+  {k:['پرامپت','ایده','کلمات کلیدی','تولید پرامپت','برچسب'],a:()=>'در بخش «ساخت پرامپت» ایده را بنویسید و نوع خروجی را انتخاب کنید. کلمات کلیدی هم‌زمان استخراج می‌شوند. بعد از «تولید پرامپت»، آن را به صف تأیید بفرستید.',link:['ساخت پرامپت','#tool']},
+  {k:['صف','تایید','تأیید','رد شد','ردشده','رد کرد','در انتظار','وضعیت پرامپت'],a:()=>'پرامپت بعد از ارسال در صف «در انتظار» می‌ماند. ادمین یا سازنده‌ی پرامپت آن را تأیید می‌کند و فقط ادمین می‌تواند آن را رد کند (با ذکر دلیل). پرامپت ردشده را می‌توانید ویرایش کنید و دوباره بفرستید.',link:['صف تأیید','#queue']},
+  {k:['ساخت خروجی','خروجی','پیش نمایش','پیشنمایش','چطور اپ بسازم','برنامه بسازم'],a:()=>'بعد از تأیید پرامپت، دکمه‌ی «ساخت خروجی» ظاهر می‌شود. برنامه از روی صفحات و قابلیت‌های پرامپت یک نمونه‌ی تعاملی می‌سازد و پیش‌نمایش می‌دهد. بعد می‌توانید پروژه یا فایل آن را دانلود کنید.',link:['صف تأیید','#queue']},
+  {k:['apk','اندروید','نصب روی گوشی','نصب اپ','اکشن','actions','گوشی'],a:()=>'پروژه‌ی اندروید را از «ساخت خروجی» دانلود و در یک مخزن GitHub بفرستید. گردش‌کار Actions خودش APK را می‌سازد و در Artifacts می‌گذارد. بعد APK را روی گوشی نصب کنید. گام‌های کامل در راهنمای انتشار هست.',link:['راهنمای انتشار','#guide']},
+  {k:['github','گیت هاب','گیتهاب','pages','پیجز','انتشار','404','سایت باز نمیشه','آدرس سایت'],a:()=>'فایل باید دقیقاً با نام index.html در مخزن باشد. بعد در Settings > Pages شاخه‌ی main و پوشه‌ی root را انتخاب کنید. اگر 404 دیدید، نام فایل (مثلاً index (1).html) یا تمام نشدن اجرای Pages را بررسی کنید و صفحه را با Ctrl+F5 تازه کنید.',link:['راهنمای انتشار','#guide']},
+  {k:['ویندوز','windows','exe','دسکتاپ','electron'],a:()=>'خروجی ویندوز پروژه‌ی Electron است. با npm install و npm start اجرا می‌شود و npm run dist نصب‌کننده می‌سازد. گردش‌کار GitHub آن را هم می‌تواند بسازد.'},
+  {k:['دانلود','zip','txt','json','فایل دانلود نمیشه','دانلود نمیشه'],a:()=>'در این صفحه TXT و JSON پرامپت و ZIP پروژه‌ها از دکمه‌های همان بخش دانلود می‌شوند. اگر دانلود شروع نشد، اجازه‌ی دانلود مرورگر را بررسی کنید و صفحه را دوباره باز کنید.'},
+  {k:['امنیت','حریم','داده','ذخیره','پاک شد','از بین رفت','پشتیبان','بک آپ','backup'],a:()=>'داده‌ها فقط در مرورگر همین دستگاه ذخیره می‌شوند و رمزها هش‌شده‌اند. با پاک‌کردن اطلاعات مرورگر از بین می‌روند. ادمین می‌تواند از بخش امنیت پشتیبان رمزگذاری‌شده بگیرد.',link:['امنیت','#security']},
+  {k:['نقش','اپراتور','ادمین','دسترسی','مجوز'],a:()=>'ادمین همه‌ی پرامپت‌ها و کاربران را مدیریت می‌کند. اپراتور پرامپت‌های خودش را می‌سازد، ویرایش و تأیید می‌کند و خروجی می‌گیرد؛ رد کردن و مدیریت کاربران با ادمین است.'},
+  {k:['انسان','پشتیبان انسانی','با آدم','تماس','تیکت','شکایت','مشکل دارم','گزارش مشکل'],a:()=>'اگر پاسخ را پیدا نکردید، یک تیکت بسازید تا ادمین جواب بدهد.',ticket:true}
+];
+const SUGGEST=['شروع ۱۴ روز رایگان','قیمت‌ها','ساخت APK','فعال‌سازی ۲FA','فراموشی رمز','انتشار در GitHub'];
+function answer(text){
+  const t=nz(text);let best=null,bs=0;
+  KB.forEach(e=>{let s=0;e.k.forEach(w=>{const n=nz(w);if(n&&t.includes(n))s+=n.length+1});if(s>bs){bs=s;best=e}});
+  if(best)return {t:best.a(),link:best.link,ticket:best.ticket};
+  return {t:'جواب دقیقی برای این سؤال ندارم. یکی از موضوع‌های زیر را امتحان کنید یا تیکت بسازید تا ادمین پاسخ دهد.',chips:true,ticket:true};
+}
+
+/* ---- تاریخچه ---- */
+const hist=()=>store.get('bot',[]);
+const push=m=>{const h=hist();h.push(m);store.set('bot',h.slice(-40))};
+function greet(){if(!hist().length)push({r:'b',t:'سلام! من دستیار پشتیبانی پرامپت‌ساز هستم. درباره‌ی اشتراک، حساب، ساخت خروجی یا انتشار بپرسید.',chips:true})}
+
+/* ---- تیکت‌ها ---- */
+const tickets=()=>store.get('tickets',[]);
+const saveTickets=t=>store.set('tickets',t.slice(0,200));
+const myTickets=()=>{const u=me();return u?tickets().filter(t=>t.uid===u.id):[]};
+const unseen=()=>myTickets().filter(t=>t.reply&&!t.seen).length;
+
+/* ---- رابط ربات ---- */
+function bubble(m){
+  let h='<div class="bm '+(m.r==='u'?'me':'bot')+'">'+esc(m.t).replace(/\n/g,'<br>');
+  if(m.link)h+='<div class="bl"><a class="btn sm" href="'+m.link[1]+'" data-botnav>'+esc(m.link[0])+'</a></div>';
+  if(m.ticket)h+='<div class="bl"><button class="btn sm" type="button" data-bot="ticket">ثبت تیکت</button></div>';
+  if(m.chips)h+='<div class="chips bl">'+SUGGEST.map(s=>'<button class="chip" type="button" data-q="'+esc(s)+'">'+esc(s)+'</button>').join('')+'</div>';
+  return h+'</div>';
+}
+function ticketsHTML(){
+  const u=me();
+  if(!u)return '<div class="empty"><b>برای ثبت تیکت وارد شوید</b>تیکت‌ها به حساب شما وصل می‌شوند تا پاسخ را ببینید.<div style="margin-top:10px"><a class="btn sm primary" href="#account" data-botnav>ورود یا ثبت‌نام</a></div></div>';
+  const list=myTickets();
+  return '<form id="tkF" novalidate><div class="field"><label for="tkSub">موضوع</label><input class="inp" id="tkSub" maxlength="80" autocomplete="off"></div><div class="field"><label for="tkMsg">پیام شما</label><textarea class="inp" id="tkMsg" maxlength="600" style="min-height:90px"></textarea></div><div class="err" id="tkErr" role="alert"></div><button class="btn primary" type="submit" style="width:100%">ارسال تیکت</button></form>'
+   +'<h4 style="margin:16px 0 8px;font-size:14px">تیکت‌های من</h4>'+(list.length?list.map(t=>'<div class="tk"><div class="row" style="justify-content:space-between"><b>'+esc(t.subject)+'</b><span class="pill '+(t.status==='open'?'pending':'approved')+'">'+(t.status==='open'?'باز':'بسته')+'</span></div><div class="hint">'+esc(fmtDT(t.ts))+'</div><p style="margin:6px 0">'+esc(t.msg)+'</p>'+(t.reply?'<div class="tkr"><b>پاسخ پشتیبان:</b> '+esc(t.reply)+'</div>':'<div class="hint">هنوز پاسخی ثبت نشده است.</div>')+'</div>').join(''):'<div class="hint">هنوز تیکتی نساخته‌اید.</div>');
+}
+function render(){
+  if(!root)return;
+  const fabDot=unseen();
+  let h='<button class="botfab" id="botFab" type="button" aria-label="پشتیبانی" aria-expanded="'+open+'"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="11" rx="3.5"/><path d="M12 8V5M9.5 5h5"/><circle cx="9" cy="13.5" r="1" fill="currentColor"/><circle cx="15" cy="13.5" r="1" fill="currentColor"/></svg>'+(fabDot?'<i class="dot2"></i>':'')+'</button>';
+  if(open){
+    h+='<section class="botpanel" role="dialog" aria-label="پشتیبانی"><header class="bothd"><div><b>پشتیبانی پرامپت‌ساز</b><div class="hint">دستیار خودکار · پاسخ آماده</div></div><div class="row" style="gap:6px"><button class="btn sm'+(view==='tickets'?' primary':'')+'" type="button" data-bot="'+(view==='tickets'?'chat':'tickets')+'">'+(view==='tickets'?'گفتگو':'تیکت‌ها'+(fabDot?' ('+fa(fabDot)+')':''))+'</button><button class="icon-btn" type="button" data-bot="close" aria-label="بستن" style="width:34px;height:34px">✕</button></div></header>';
+    if(view==='chat'){
+      h+='<div class="botmsgs" id="botMsgs" aria-live="polite">'+hist().map(bubble).join('')+(busy?'<div class="bm bot typing"><i></i><i></i><i></i></div>':'')+'</div><form class="botin" id="botF" autocomplete="off"><input class="inp" id="botIn" maxlength="200" placeholder="سؤال خود را بنویسید..." aria-label="پیام"><button class="btn primary" type="submit" aria-label="ارسال" '+(busy?'disabled':'')+'>ارسال</button></form>';
+    }else h+='<div class="botmsgs">'+ticketsHTML()+'</div>';
+    h+='</section>';
+  }
+  root.innerHTML=h;
+  const m=$('#botMsgs');if(m&&view==='chat')m.scrollTop=m.scrollHeight;
+  if(open&&view==='chat'&&!busy){const i=$('#botIn');i&&i.focus({preventScroll:true})}
+}
+function say(text){
+  text=clean(text,200);if(!text||busy)return;
+  push({r:'u',t:text});busy=true;render();
+  const a=answer(text);
+  setTimeout(()=>{push({r:'b',t:a.t,link:a.link,ticket:a.ticket,chips:a.chips});busy=false;render()},450);
+}
+root.addEventListener('click',e=>{
+  if(e.target.closest('#botFab')){open=!open;if(open){greet();view='chat'}render();return}
+  const q=e.target.closest('[data-q]');if(q){say(q.dataset.q);return}
+  if(e.target.closest('[data-botnav]')){open=false;setTimeout(render,0);return}
+  const b=e.target.closest('[data-bot]');if(!b)return;const k=b.dataset.bot;
+  if(k==='close'){open=false;render()}
+  else if(k==='ticket'){view='tickets';render()}
+  else if(k==='chat'){view='chat';render()}
+  else if(k==='tickets'){
+    view='tickets';const all=tickets(),u=me();
+    if(u){all.forEach(t=>{if(t.uid===u.id&&t.reply)t.seen=true});saveTickets(all)}
+    render();
+  }
+});
+root.addEventListener('submit',e=>{
+  e.preventDefault();
+  if(e.target.id==='botF'){const i=$('#botIn');say(i.value);return}
+  if(e.target.id==='tkF'){
+    const u=me(),er=$('#tkErr'),sub=clean($('#tkSub').value,80),msg=clean($('#tkMsg').value,600);
+    if(!u){er.textContent='ابتدا وارد حساب شوید.';return}
+    if(sub.length<3||msg.length<10){er.textContent='موضوع و توضیح (دست‌کم یک جمله) را بنویسید.';return}
+    const all=tickets();
+    if(all.filter(t=>t.uid===u.id&&Date.now()-t.ts<3600000).length>=3){er.textContent='در یک ساعت بیش از ۳ تیکت نمی‌شود فرستاد؛ بعداً دوباره تلاش کنید.';return}
+    all.unshift({id:'t-'+uid(),uid:u.id,subject:sub,msg,ts:Date.now(),status:'open',reply:'',replyTs:0,seen:true});saveTickets(all);
+    audit('ticket_new',sub,u.id);toast('تیکت ثبت شد؛ ادمین پاسخ می‌دهد','ok');PS.refresh&&PS.refresh();render();
+  }
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&open&&!$('#ov')){open=false;render()}});
+
+/* ---- پنل تیکت‌ها برای ادمین (داخل حساب کاربری) ---- */
+PS.ticketPanel=function(){
+  if(!isAdmin())return '';
+  const all=tickets().slice().sort((a,b)=>(a.status===b.status?b.ts-a.ts:(a.status==='open'?-1:1)));
+  const openN=all.filter(t=>t.status==='open').length;
+  return '<div class="card" style="margin-top:14px" id="tkBox"><h3 style="font-size:17px;margin-bottom:10px">تیکت‌های پشتیبانی <span class="hint">('+fa(openN)+' باز)</span></h3>'
+   +(all.length?'<div class="ulist">'+all.slice(0,20).map(t=>{const au=userById(t.uid);return '<div class="urow" style="grid-template-columns:minmax(0,1fr)"><div style="min-width:0"><div class="row" style="justify-content:space-between"><b>'+esc(t.subject)+'</b><span class="pill '+(t.status==='open'?'pending':'approved')+'">'+(t.status==='open'?'باز':'بسته')+'</span></div><div class="hint">'+esc(au?au.name:'کاربر حذف‌شده')+' · '+esc(fmtDT(t.ts))+'</div><p style="margin:6px 0">'+esc(t.msg)+'</p>'
+     +(t.reply?'<div class="tkr"><b>پاسخ شما:</b> '+esc(t.reply)+'</div>':'')
+     +(t.status==='open'?'<div class="field" style="margin:8px 0 0"><label class="sr" for="tr_'+esc(t.id)+'">پاسخ</label><textarea class="inp" id="tr_'+esc(t.id)+'" maxlength="500" style="min-height:70px" placeholder="پاسخ را بنویسید..."></textarea></div><div class="row" style="margin-top:8px"><button class="btn sm teal" type="button" data-tk="reply" data-id="'+esc(t.id)+'">پاسخ و بستن</button><button class="btn sm" type="button" data-tk="close" data-id="'+esc(t.id)+'">بستن بدون پاسخ</button></div>':'')+'</div></div>'}).join('')+'</div>':'<div class="empty"><b>تیکتی نیست</b>وقتی کاربری از ربات تیکت بسازد، اینجا دیده می‌شود.</div>')+'</div>';
+};
+$('#accBox').addEventListener('click',e=>{
+  const b=e.target.closest('[data-tk]');if(!b||!isAdmin())return;
+  const all=tickets(),t=all.find(x=>x.id===b.dataset.id);if(!t)return;
+  if(b.dataset.tk==='reply'){
+    const r=clean(($('#tr_'+t.id)||{}).value,500);if(r.length<3){toast('پاسخ را بنویسید','bad');return}
+    t.reply=r;t.replyTs=Date.now();t.seen=false;audit('ticket_reply',t.subject,me().id);
+  }
+  t.status='closed';saveTickets(all);toast('تیکت بسته شد','ok');PS.refresh&&PS.refresh();render();
+});
+addEventListener('storage',e=>{if(e.key==='ps:tickets'||e.key==='ps:bot')render()});
+PS.drawBot=render;
+render();
+})();
 /* ===== امنیت: وضعیت، چک‌لیست، ممیزی، پشتیبان؛ راهنمای اندروید؛ ناوبری ===== */
 (function(){
 'use strict';
@@ -1793,7 +1971,7 @@ const {$,$$,store,clean,esc,fa,toast,copyText,S,saveUsers,savePrompts,me,isAdmin
 const E=PS.engine,te=new TextEncoder();
 
 /* ---- برچسب رویدادها ---- */
-const EV={login_ok:'ورود موفق',login_fail:'ورود ناموفق',login_blocked:'ورود حساب مسدود',logout:'خروج',idle_logout:'خروج بی‌فعالیتی',session_expired:'پایان نشست',session_revoked:'نشست بسته‌شده',session_blocked:'نشست مسدود',session_invalid:'نشست نامعتبر',register:'ثبت‌نام',password_change:'تغییر رمز',password_reset:'رمز موقت',role_change:'تغییر نقش',user_create:'تعریف کاربر',user_delete:'حذف کاربر',user_suspend:'مسدودسازی',user_unsuspend:'رفع مسدودی',plan_buy:'خرید اشتراک',payment_fail:'پرداخت ناموفق',plan_grant:'افزودن اشتراک',plan_revoke:'لغو اشتراک',trial_start:'شروع آزمایشی',autorenew:'تمدید خودکار','2fa_on':'فعال‌سازی ۲FA','2fa_off':'غیرفعال‌سازی ۲FA','2fa_fail':'کد ۲FA نادرست','2fa_regen':'کد بازیابی تازه','2fa_reset':'بازنشانی ۲FA','2fa_recovery_used':'مصرف کد بازیابی',sessions_revoked:'بستن نشست‌ها',account_delete:'حذف حساب',profile_edit:'ویرایش پروفایل',hash_upgrade:'ارتقای هش رمز',reauth_fail:'تأیید هویت ناموفق',backup_export:'پشتیبان‌گیری',backup_import:'بازیابی پشتیبان'};
+const EV={login_ok:'ورود موفق',login_fail:'ورود ناموفق',login_blocked:'ورود حساب مسدود',logout:'خروج',idle_logout:'خروج بی‌فعالیتی',session_expired:'پایان نشست',session_revoked:'نشست بسته‌شده',session_blocked:'نشست مسدود',session_invalid:'نشست نامعتبر',register:'ثبت‌نام',password_change:'تغییر رمز',password_reset:'رمز موقت',role_change:'تغییر نقش',user_create:'تعریف کاربر',user_delete:'حذف کاربر',user_suspend:'مسدودسازی',user_unsuspend:'رفع مسدودی',plan_buy:'خرید اشتراک',payment_fail:'پرداخت ناموفق',plan_grant:'افزودن اشتراک',plan_revoke:'لغو اشتراک',trial_start:'شروع آزمایشی',autorenew:'تمدید خودکار','2fa_on':'فعال‌سازی ۲FA','2fa_off':'غیرفعال‌سازی ۲FA','2fa_fail':'کد ۲FA نادرست','2fa_regen':'کد بازیابی تازه','2fa_reset':'بازنشانی ۲FA','2fa_recovery_used':'مصرف کد بازیابی',sessions_revoked:'بستن نشست‌ها',account_delete:'حذف حساب',profile_edit:'ویرایش پروفایل',hash_upgrade:'ارتقای هش رمز',reauth_fail:'تأیید هویت ناموفق',backup_export:'پشتیبان‌گیری',backup_import:'بازیابی پشتیبان',ticket_new:'تیکت جدید',ticket_reply:'پاسخ به تیکت'};
 const BAD=new Set(['login_fail','login_blocked','2fa_fail','reauth_fail','payment_fail','session_revoked']);
 
 /* ---- وضعیت زنده ---- */
